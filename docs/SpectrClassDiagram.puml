@@ -1,0 +1,55 @@
+@startuml Spectr class diagram
+
+scale 1.5
+left to right direction
+
+package "Audio loading" {
+class AudioLoader {
+
+}
+
+class WavLoader {
+
+}
+
+AudioLoader o-- WavLoader
+AudioLoader o-- AudioContainer
+
+WavLoader --> AudioContainer : creates
+
+}
+
+class SpectrDesktopApp {
+    + int main(int argc, char* argv[])
+}
+
+class CmdArgumentParser {
+
+}
+
+class SpectrConfiguration {
+    
+}
+
+class SpectrogramRendererOpenGL {
+
+}
+
+class SpectrCalculatorCPU {
+
+}
+
+
+
+SpectrDesktopApp *-- CmdArgumentParser
+SpectrDesktopApp *-- SpectrConfiguration
+CmdArgumentParser ..> SpectrConfiguration : creates
+
+SpectrDesktopApp *-- SpectrCalculatorCPU
+SpectrDesktopApp *-- SpectrogramRendererOpenGL
+SpectrDesktopApp *-- AudioLoader
+
+
+
+@enduml
+

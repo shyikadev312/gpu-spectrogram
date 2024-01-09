@@ -1,0 +1,12 @@
+# IDEs files
+.vs/
+.vscode/
+CMakeLists.txt.user
+CMakeSettings.json
+
+# Build files
+build/
+out/
+
+# Temp files
+temp/

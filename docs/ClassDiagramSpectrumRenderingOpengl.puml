@@ -1,0 +1,66 @@
+@startuml Class diagram for time-frequency heatmap creation
+
+scale 1.5
+left to right direction
+
+class SpectrDesktopApp {
+
+}
+
+package spectr::spectrum::opengl {
+
+class TimeFrequencyHeatmapRenderer {
+    
+}
+
+class FftManagerSettings {
+    + size_t sampleRate
+    + BitDepth bitDepth
+}
+
+class FftManager {
+    + FftManager(FftManagerSettings settings)
+    + setData()
+}
+
+' std::vector<std::shared_ptr<TimeFrequencyHeatBuffer>>
+
+class TimeFrequencyHeatmapContainer {
+    + TimeFrequencyHeatmapContainer(size_t sampleRate, size_t frequencyCount)
+    + getBuffersForTimeRange(float startTime, float endTime);
+    + allocateBuffer(startTime, float endTime)
+}
+
+class TimeFrequencyHeatBuffer {
+    + float getStartTime() const; // getStartSample() ???
+    + float getEndTime();
+}
+
+class FftOpenCL {
+
+}
+
+class AudioData {
+
+}
+
+FftManager *-- FftManagerSettings
+FftManager *-- FftOpenCL
+FftManager *-- FftOpenGL
+FftManager *-- CooleyTukeyFftCpu
+FftManager *-- TimeFrequencyHeatmapContainer
+
+' FftManager --> AudioData : uses
+FftOpenCL --> AudioData : uses
+
+TimeFrequencyHeatmapRenderer *-- TimeFrequencyHeatmapContainer
+TimeFrequencyHeatmapContainer *-- TimeFrequencyHeatBuffer
+
+}
+
+SpectrDesktopApp *-- FftManager
+SpectrDesktopApp *-- TimeFrequencyHeatmapRenderer
+SpectrDesktopApp *-- "AudioLoader (SampleProvider)"
+
+@enduml
+

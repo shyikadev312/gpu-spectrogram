@@ -1,0 +1,8 @@
+add_subdirectory(cmake_utils)
+add_subdirectory(audio_loader)
+add_subdirectory(utils)
+add_subdirectory(desktop_app)
+add_subdirectory(render_gl)
+add_subdirectory(calc_cpu)
+add_subdirectory(calc_opencl)
+add_subdirectory(dev_apps)

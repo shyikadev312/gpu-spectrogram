@@ -1,0 +1,23 @@
+[requires]
+fmt/10.1.1
+glfw/3.3.8
+glad/0.1.36
+glm/cci.20230113
+gtest/cci.20210126
+spdlog/1.12.0
+imgui/cci.20230105+1.89.2.docking
+opencl-clhpp-headers/2023.04.17
+
+[generators]
+CMakeDeps
+
+[options]
+glad:spec=gl
+glad:gl_version=4.6
+
+[imports]
+./res/bindings, imgui_impl_glfw.h -> imgui_bindings
+./res/bindings, imgui_impl_opengl3.h -> imgui_bindings
+./res/bindings, imgui_impl_opengl3_loader.h -> imgui_bindings
+./res/bindings, imgui_impl_glfw.cpp -> imgui_bindings
+./res/bindings, imgui_impl_opengl3.cpp -> imgui_bindings

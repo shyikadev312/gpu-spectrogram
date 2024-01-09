@@ -1,0 +1,16 @@
+@startuml Spectr activity diagram
+
+scale 1.5
+
+partition "Execute " {
+    (*) --> ["User launches spectr app"] "int main(int argc, char* argv[])" as Start
+    Start --> "SpectrDesktop::main(int argc, char* argv[])" as S1
+    S1 --> "arguments = CmdArgumentParser{ argc, argv, messages }" as S2
+    S2 --> "window = createWindow()" as S3
+    S3 --> "spectr = SpectrCalculator"
+    spectrRenderer = createRenderer(window)
+    S2 --> "d"
+}
+
+
+@enduml

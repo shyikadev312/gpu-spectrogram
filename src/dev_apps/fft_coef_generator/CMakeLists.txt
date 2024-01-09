@@ -1,0 +1,1 @@
+DEFINE_EXECUTABLE_MODULE(spectr.test_apps.fft_coef_generator)

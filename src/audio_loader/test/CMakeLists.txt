@@ -1,0 +1,1 @@
+DEFINE_TEST_MODULE(spectr.audio_loader)
