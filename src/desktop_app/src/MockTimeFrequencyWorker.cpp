@@ -59,7 +59,7 @@ void MockTimeFrequencyWorker::addPendingColumn()
     std::vector<float> values;
     for (size_t i = 0; i < m_settings.columnHeight; ++i)
     {
-        const auto value = static_cast<float>(i);
+        const auto value = static_cast<float>(i) * 2.0f;
         values.push_back(value);
     }
 

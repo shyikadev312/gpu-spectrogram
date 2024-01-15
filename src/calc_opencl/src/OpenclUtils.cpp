@@ -792,7 +792,7 @@ void OpenclUtils::printContextInfo(cl::Context context, std::ostream& out)
         {
             const auto propertyName = properties[i];
             const auto propertyValue = properties[i + 1];
-            out << toStringProperty(propertyName, propertyValue) << "\n";
+            out << toStringProperty(static_cast<cl_uint>(propertyName), propertyValue) << "\n";
         }
     }
 }

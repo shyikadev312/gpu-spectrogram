@@ -7,9 +7,9 @@ namespace
 float getAppropriateMarksStep(const glm::vec2 p1, const glm::vec2 p2)
 {
     const auto distance = glm::distance(p1, p2);
-    const auto distancePowerDouble = std::log10(distance);
-    const auto distancePowerInteger = std::lround(distancePowerDouble);
-    float step = std::pow(10, distancePowerInteger);
+    const auto distancePower = std::log10(distance);
+    const auto distancePowerRounded = std::round(distancePower);
+    const auto step = std::pow(10.0f, distancePowerRounded);
     return step;
 }
 }
@@ -19,7 +19,7 @@ ScalableAxisRenderer::ScalableAxisRenderer(AxisRenderMode axisRenderMode)
   , m_axis1{ axisRenderMode }
   , m_axis2{ axisRenderMode }
 {
-    //m_axis2.setIsRenderLabels(false);
+    // m_axis2.setIsRenderLabels(false);
 }
 
 void ScalableAxisRenderer::render(RenderContext& renderContext)
@@ -42,7 +42,7 @@ void ScalableAxisRenderer::render(RenderContext& renderContext)
     m_axis1.setMarksStep(step);
     m_axis2.setMarksStep(step / 10.f);
 
-    m_axis1.render(renderContext);
+    // m_axis1.render(renderContext);
     m_axis2.render(renderContext);
 }
 }

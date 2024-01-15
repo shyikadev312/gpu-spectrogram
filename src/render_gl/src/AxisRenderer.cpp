@@ -127,7 +127,7 @@ void ShowLabel(const std::string& title,
     /*window_pos.x = (location & 1) ? (work_pos.x + work_size.x - PAD) : (work_pos.x + PAD);
     window_pos.y = (location & 2) ? (work_pos.y + work_size.y - PAD) : (work_pos.y + PAD);*/
 
-    window_pos.x = pixelCoords.x;
+    window_pos.x = static_cast<float>(pixelCoords.x);
     window_pos.y = work_size.y - pixelCoords.y;
 
     if (mode == AxisRenderMode::Horizontal)
@@ -217,7 +217,7 @@ void AxisRenderer::render(const RenderContext& renderContext)
 
         if (m_mode == AxisRenderMode::Horizontal)
         {
-            markPixelCoord.y += FontSizeInPixels * 2;
+            markPixelCoord.y += static_cast<int>(FontSizeInPixels * 2);
         }
         else
         {
@@ -228,9 +228,12 @@ void AxisRenderer::render(const RenderContext& renderContext)
         {
             const auto value =
               m_mode == AxisRenderMode::Horizontal ? markWorldCoord.x : markWorldCoord.y;
-            const auto digitsCount = static_cast<int>(std::log10(1.0f / m_marksStep));
-            const auto formatString = fmt::format("{{:.{}}}", digitsCount);
-            const auto text = fmt::format(fmt::runtime("{:.0f}"), value);
+
+            auto digitsCount = static_cast<int>(std::log10(m_marksStep));
+            digitsCount = digitsCount > 0 ? 0 : -digitsCount;
+
+            const auto formatString = fmt::format("{{:.{}f}}", digitsCount);
+            const auto text = fmt::format(fmt::runtime(formatString), value);
             const auto title =
               (m_mode == AxisRenderMode::Vertical ? "Vertical" : "Horizontal") + std::to_string(i);
             ShowLabel(title, text, markPixelCoord, m_mode);

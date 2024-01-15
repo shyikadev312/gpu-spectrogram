@@ -1,6 +1,6 @@
 #pragma once
 
-#include <spectr/calc_opencl/OpenClApi.h>
+#include <spectr/calc_opencl/OpenclApi.h>
 
 namespace spectr::calc_opencl
 {

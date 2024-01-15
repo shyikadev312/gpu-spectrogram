@@ -7,6 +7,7 @@ gtest/cci.20210126
 spdlog/1.12.0
 imgui/cci.20230105+1.89.2.docking
 opencl-clhpp-headers/2023.04.17
+benchmark/1.8.3
 
 [generators]
 CMakeDeps

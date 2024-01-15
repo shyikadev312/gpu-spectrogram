@@ -5,6 +5,7 @@
 #include <spectr/calc_opencl/FftCooleyTukeyRadix2.h>
 #include <spectr/calc_opencl/OpenclManager.h>
 #include <spectr/desktop_app/AudioFileTimeFrequencyWorker.h>
+#include <spectr/desktop_app/MinMaxWidget.h>
 #include <spectr/desktop_app/MockTimeFrequencyWorker.h>
 #include <spectr/render_gl/ImguiUtils.h>
 #include <spectr/utils/Assert.h>
@@ -60,15 +61,16 @@ int SpectrDesktopApp::mainImpl(int argc, char* argv[])
     // parse input parameters
     // parseCommandLineArguments();
 
+    // init logging
+    spdlog::set_level(spdlog::level::trace);
+
     // setup graphics
     initGraphics();
 
     m_camera = std::make_shared<render_gl::Camera>();
     m_checkerGridRenderer = std::make_unique<render_gl::CheckerGridRenderer>();
-    m_timeLineRenderer =
-      std::make_unique<render_gl::AxisRenderer>(render_gl::AxisRenderMode::Horizontal);
-    m_frequencyLineRenderer =
-      std::make_unique<render_gl::AxisRenderer>(render_gl::AxisRenderMode::Vertical);
+    m_scalableTimeLineRenderer =
+      std::make_unique<render_gl::ScalableAxisRenderer>(render_gl::AxisRenderMode::Horizontal);
     m_scalableFrequencyLineRenderer =
       std::make_unique<render_gl::ScalableAxisRenderer>(render_gl::AxisRenderMode::Vertical);
     m_renderContext = std::make_unique<render_gl::RenderContext>();
@@ -77,11 +79,11 @@ int SpectrDesktopApp::mainImpl(int argc, char* argv[])
     m_fpsGuard = std::make_unique<render_gl::FpsGuard>();
 
     // create the spectrogram computation entities
-    constexpr bool UseMockDataWorker = true;
+    constexpr bool UseMockDataWorker = false;
     if (UseMockDataWorker)
     {
         // spectrogram settings
-        const auto frequencyRangeSize = 20;
+        const auto frequencyRangeSize = 100;
         const auto singleBufferColumnCount = 10;
 
         // create spectrogram container
@@ -119,34 +121,59 @@ int SpectrDesktopApp::mainImpl(int argc, char* argv[])
             CL_WGL_HDC_KHR,
             reinterpret_cast<cl_context_properties>(GetDC(glfwGetWin32Window(m_window))),
         };
+#elif defined(OS_LINUX)
+        const std::vector<cl_context_properties> openclContextProperties{
+            CL_GL_CONTEXT_KHR,
+            reinterpret_cast<cl_context_properties>(glfwGetGLXContext(m_window)),
+            CL_GLX_DISPLAY_KHR,
+            reinterpret_cast<cl_context_properties>(glfwGetX11Display()),
+        };
 #endif
 
         openclManager->initContext(openclContextProperties);
 
         // settings: FFT calculations per second
-        const auto fftCalculationsInSecond = 1;
+        const auto fftCalculationsInSecond = 100;
         // settings: FFT size
-        const auto oneFftSampleCountPower = 5;
+        const auto oneFftSampleCountPower = 17;
         const auto singleFftSize = 1 << oneFftSampleCountPower;
 
         auto fftCalculator = std::make_unique<calc_opencl::FftCooleyTukeyRadix2>(
           openclManager->getContext(), singleFftSize);
 
+        // const auto assetPathRelative = "samples/1kHz_44100Hz_16bit_05sec.wav";
+        // const auto assetPathRelative = "samples/Sample1.wav";
+        const auto assetPathRelative = "samples/3.wav";
         // const auto assetPathRelative = "samples/440Hz_44100Hz_16bit_05sec.wav";
-        // const auto audioData = audio_loader::AudioLoader::loadAsset(assetPathRelative);
-        const auto audioData = audio_loader::AudioDataGenerator::generate(256, 16, { { 4 } });
+        const auto audioData = audio_loader::AudioLoader::loadAsset(assetPathRelative);
+        // const auto audioData =
+        //  audio_loader::AudioDataGenerator::generate<int16_t>(1 << 14, 30, { { 4, 32000 } });
+        // audio_loader::AudioDataGenerator::generate<int16_t>(4096, 30, { { 23.1234, 32000 } });
+        // audio_loader::AudioDataGenerator::generate<int16_t>(1024, 2, { { 4, 100 } });
 
-        ASSERT(audioData.getBitDepth() == audio_loader::BitDepth::Bit16);
+        //---
 
-        const auto columnsInOneSecond = 1.0f / fftCalculationsInSecond;
-        const auto valuesPerHertzUnit = singleFftSize / audioData.getDuration();
+        spdlog::info("Audio info:\n"
+                     "sample rate: {}\n"
+                     "duration: {}\n",
+                     audioData.getSampleRate(),
+                     audioData.getDuration());
+
+        ASSERT(audioData.getSampleDataType() == audio_loader::SampleDataType::Int16);
+
+        const auto columnsInOneSecond = fftCalculationsInSecond;
 
         const auto fftFrequencyRatio =
           static_cast<float>(audioData.getSampleRate()) / singleFftSize;
 
+        const auto valuesPerHertzUnit = 1.0f / fftFrequencyRatio;
+        // const auto valuesPerHertzUnit = singleFftSize / audioData.getDuration();
+
+        const auto frequencyOffset = -fftFrequencyRatio / 2.0f;
+
         // create spectrogram container
         render_gl::TimeFrequencyHeatmapContainerSettings heatmapContainerSettings{
-            .frequencyOffset = 0.0f,
+            .frequencyOffset = frequencyOffset,
             .valuesInOneHertz = valuesPerHertzUnit,
             .columnsInOneSecond = columnsInOneSecond,
             .columnHeightElementCount = singleFftSize / 2,
@@ -164,11 +191,44 @@ int SpectrDesktopApp::mainImpl(int argc, char* argv[])
         };
         auto audioFileWorker =
           std::make_shared<AudioFileTimeFrequencyWorker>(std::move(audioFileWorkerSettings));
+
+        m_onMainLoopActions.push_back([audioFileWorker = audioFileWorker]()
+                                      { audioFileWorker->update(); });
+
+        audioFileWorker->startWork();
     }
 
     // create spectrogram renderer
     m_timeFrequencyHeatmapRenderer =
       std::make_unique<render_gl::TimeFrequencyHeatmapRenderer>(m_timeFrequencyHeatmapContainer);
+
+    // m_cameraBoundsController = std::make_shared<CameraBoundsController>();
+    // m_onMainLoopActions.push_back(
+    //   [=]()
+    //   {
+    //       //
+    //   });
+
+    // create widget with sliders
+    auto minMaxWidget = std::make_shared<MinMaxWidget>();
+    m_onRenderActions.push_back(
+      [=,
+       container = m_timeFrequencyHeatmapContainer](const render_gl::RenderContext& renderContext)
+      {
+          minMaxWidget->setRange(0, container->getMaxValue());
+          minMaxWidget->render(renderContext);
+      });
+
+    m_onMainLoopActions.push_back(
+      [minMaxWidget,
+       container = m_timeFrequencyHeatmapContainer,
+       renderer = m_timeFrequencyHeatmapRenderer]()
+      {
+          const auto minValue = std::max(minMaxWidget->getMin(), 0.0f);
+          const auto maxValue = std::min(minMaxWidget->getMax(), container->getMaxValue());
+          renderer->setScaleMinValue(minValue);
+          renderer->setScaleMaxValue(maxValue);
+      });
 
     // render!
 
@@ -316,10 +376,10 @@ void SpectrDesktopApp::onRender()
 {
     const auto& renderContext = *m_renderContext;
 
-    // for (auto& action : m_onRenderActions)
-    //{
-    //    action(renderContext);
-    //}
+    for (auto& action : m_onRenderActions)
+    {
+        action(renderContext);
+    }
 
     ImGui::ShowDemoWindow();
 
@@ -329,8 +389,7 @@ void SpectrDesktopApp::onRender()
 
     m_fpsGuard->onRender();
     m_checkerGridRenderer->render(*m_renderContext);
-    //m_timeLineRenderer->render(*m_renderContext);
-    //m_frequencyLineRenderer->render(*m_renderContext);
+    m_scalableTimeLineRenderer->render(*m_renderContext);
     m_scalableFrequencyLineRenderer->render(*m_renderContext);
     m_timeFrequencyHeatmapRenderer->render(*m_renderContext);
 

@@ -15,9 +15,10 @@ public:
     void render(const RenderContext& renderContext);
 
 private:
-    float m_cellSize = 1;
-    GLuint m_shaderProgram = NoShaderProgram;
+    glm::vec2 m_cellSize = { 1.0f, 1.0f };
     GLuint m_vbo = NoBuffer;
     GLuint m_vao = NoBuffer;
+    GLuint m_shaderProgram = NoShaderProgram;
+    GLint m_cellSizeScaleIdx = NoUniform;
 };
 }

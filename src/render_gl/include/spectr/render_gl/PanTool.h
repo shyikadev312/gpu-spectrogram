@@ -33,5 +33,9 @@ private:
     bool m_isControlPressed = false;
     bool m_isShiftPressed = false;
     glm::vec2 m_scrollSpeedCoeff = { 1.05f, 1.05f };
+
+    bool m_isMouseMoving = false;
+    glm::ivec2 m_mouseStartPosition{};
+    glm::vec2 m_mouseMoveCameraStartPosition{};
 };
 }

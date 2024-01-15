@@ -10,17 +10,20 @@ namespace spectr::audio_loader
 template<typename T>
 using SampleData = std::vector<T>;
 
-using SampleData16 = SampleData<uint16_t>;
-using SampleData32 = SampleData<uint32_t>;
-using SampleData64 = SampleData<uint64_t>;
-using SampleDataVariant = std::variant<SampleData16, SampleData32, SampleData64>;
+using SampleData16 = SampleData<int16_t>;
+using SampleData32 = SampleData<int32_t>;
+using SampleData64 = SampleData<int64_t>;
+using SampleDataFloat = SampleData<float>;
+using SampleDataVariant = std::variant<SampleData16, SampleData32, SampleData64, SampleDataFloat>;
 
-enum class BitDepth
+enum class SampleDataType
 {
-    None,
-    Bit16,
-    Bit32,
-    Bit64,
+    DataNone,
+    Int16,
+    Int32,
+    Int64,
+    Float,
+    Double,
 };
 
 class AudioData
@@ -28,13 +31,13 @@ class AudioData
 public:
     AudioData() = default;
 
-    AudioData(BitDepth bitDepth, size_t sampleRate, std::vector<SampleDataVariant> channelsDatas);
+    AudioData(size_t sampleRate, std::vector<SampleDataVariant> channelsDatas);
 
     size_t getSampleRate() const;
 
     size_t getSampleCount() const;
 
-    BitDepth getBitDepth() const;
+    SampleDataType getSampleDataType() const;
 
     size_t getChannelCount() const;
 
@@ -46,16 +49,17 @@ public:
 
     const SampleData64& getSampleData64(size_t channelIndex) const;
 
+    const SampleDataFloat& getSampleDataFloat(size_t channelIndex) const;
+
     /**
      * @brief Returns approximate duration of the stored audio data in seconds.
      */
     float getDuration() const;
 
 private:
-    BitDepth m_bitDepth = BitDepth::None;
-    size_t m_sampleRate = 0;
-    size_t m_sampleCount = 0;
-    std::vector<SampleDataVariant> m_channelsDatas;
+    const std::vector<SampleDataVariant> m_channelsDatas;
+    const size_t m_sampleRate = 0;
+    const size_t m_sampleCount = 0;
 };
 
 }

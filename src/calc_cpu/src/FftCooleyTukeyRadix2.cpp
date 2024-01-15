@@ -82,7 +82,8 @@ bool isPowerOfTwo(size_t number, size_t& power)
     return number == 1;
 }
 
-void bitReversePermutation(std::vector<Complex>& values)
+template<typename T>
+void bitReversePermutation(std::vector<T>& values)
 {
     ASSERT(values.size() > 1);
 
@@ -109,7 +110,7 @@ void bitReversePermutation(std::vector<Complex>& values)
 }
 }
 
-std::vector<double> FftCooleyTukeyRadix2::execute(const std::vector<double>& realValues)
+std::vector<std::complex<float>> FftCooleyTukeyRadix2::getFFT(const std::vector<float>& realValues)
 {
     const auto count = realValues.size();
 
@@ -119,7 +120,7 @@ std::vector<double> FftCooleyTukeyRadix2::execute(const std::vector<double>& rea
         throw new utils::Exception("Element count must be power of 2. Count: {}", count);
     }
 
-    std::vector<Complex> complexValues(realValues.begin(), realValues.end());
+    std::vector<std::complex<float>> complexValues(realValues.begin(), realValues.end());
     bitReversePermutation(complexValues);
 
     for (size_t stage = 0; stage < powerOfTwo; ++stage)
@@ -129,7 +130,7 @@ std::vector<double> FftCooleyTukeyRadix2::execute(const std::vector<double>& rea
         const auto subFftHalfSize = subFftSize / 2;
         const auto subFftCount = count / subFftSize;
 
-        Complex omegaK{ 1 };
+        std::complex<float> omegaK{ 1 };
 
         for (size_t subFftElementIndex = 0; subFftElementIndex < subFftHalfSize;
              ++subFftElementIndex)
@@ -153,12 +154,12 @@ std::vector<double> FftCooleyTukeyRadix2::execute(const std::vector<double>& rea
         }
     }
 
-    std::vector<double> outputRealValues;
-    std::transform(complexValues.begin(),
-                   complexValues.end(),
-                   std::back_inserter(outputRealValues),
-                   [](const Complex& v) { return v.real(); });
+    return complexValues;
+}
 
-    return outputRealValues;
+std::vector<float> FftCooleyTukeyRadix2::getMagnitudes(const std::vector<float>& functionValues)
+{
+    const auto fft = getFFT(functionValues);
+    return getMagnitudesFromFFT(fft);
 }
 }

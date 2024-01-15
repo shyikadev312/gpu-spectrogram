@@ -2,6 +2,8 @@
 
 #include <spectr/utils/Assert.h>
 
+#include <stdexcept>
+
 namespace spectr::audio_loader
 {
 namespace
@@ -26,21 +28,50 @@ size_t getSampleCount(const SampleDataVariant& sampleData)
 
     return count;
 }
+
+SampleDataType getSampleDataType(const SampleDataVariant& data)
+{
+    if (std::holds_alternative<SampleData16>(data))
+    {
+        return SampleDataType::Int16;
+    }
+    if (std::holds_alternative<SampleData32>(data))
+    {
+        return SampleDataType::Int32;
+    }
+    if (std::holds_alternative<SampleData64>(data))
+    {
+        return SampleDataType::Int64;
+    }
+    if (std::holds_alternative<SampleDataFloat>(data))
+    {
+        return SampleDataType::Float;
+    }
+    throw std::runtime_error("Sample data type not recognized.");
+}
 }
 
-AudioData::AudioData(BitDepth bitDepth,
-                     size_t sampleRate,
-                     std::vector<SampleDataVariant> channelsDatas)
-  : m_bitDepth{ bitDepth }
+AudioData::AudioData(size_t sampleRate, std::vector<SampleDataVariant> channelsDatas)
+  : m_channelsDatas{ std::move(channelsDatas) }
   , m_sampleRate{ sampleRate }
-  , m_sampleCount{ audio_loader::getSampleCount(channelsDatas[0]) }
-  , m_channelsDatas{ std::move(channelsDatas) }
+  , m_sampleCount{ audio_loader::getSampleCount(m_channelsDatas[0]) }
 {
     ASSERT(!m_channelsDatas.empty());
-    const auto channelSampleCount = audio_loader::getSampleCount(m_channelsDatas[0]);
+
+    const auto& referenceData = m_channelsDatas[0];
     for (const auto& channelData : m_channelsDatas)
     {
-        ASSERT(channelSampleCount == audio_loader::getSampleCount(channelData));
+        if (audio_loader::getSampleCount(referenceData) !=
+            audio_loader::getSampleCount(channelData))
+        {
+            throw std::runtime_error("All data channels must be the same size.");
+        }
+
+        if (audio_loader::getSampleDataType(referenceData) !=
+            audio_loader::getSampleDataType(channelData))
+        {
+            throw std::runtime_error("All data channels must have the same data type of sample.");
+        }
     }
 }
 
@@ -54,9 +85,9 @@ size_t AudioData::getSampleCount() const
     return m_sampleCount;
 }
 
-BitDepth AudioData::getBitDepth() const
+SampleDataType AudioData::getSampleDataType() const
 {
-    return m_bitDepth;
+    return audio_loader::getSampleDataType(m_channelsDatas[0]);
 }
 
 size_t AudioData::getChannelCount() const
@@ -82,6 +113,11 @@ const SampleData32& AudioData::getSampleData32(size_t channelIndex) const
 const SampleData64& AudioData::getSampleData64(size_t channelIndex) const
 {
     return std::get<SampleData64>(m_channelsDatas[channelIndex]);
+}
+
+const SampleDataFloat& AudioData::getSampleDataFloat(size_t channelIndex) const
+{
+    return std::get<SampleDataFloat>(m_channelsDatas[channelIndex]);
 }
 
 float AudioData::getDuration() const

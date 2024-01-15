@@ -1,11 +1,21 @@
+#define _USE_MATH_DEFINES
+
+// Suppress Visual Studio warnings for iterators
+#define _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
+#define _SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS
+
 #include <spectr/calc_opencl/FftCooleyTukeyRadix2.h>
+
+#include <spectr/calc_cpu/FftCooleyTukeyUtils.h>
 
 #include <spectr/utils/Asset.h>
 #include <spectr/utils/Exception.h>
 #include <spectr/utils/File.h>
+#include <spectr/utils/Timer.h>
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <sstream>
@@ -15,8 +25,6 @@ namespace spectr::calc_opencl
 {
 using Complex = std::complex<float>;
 static_assert(sizeof(Complex) == 2 * sizeof(cl_float));
-
-constexpr auto MaxFftPowerOfTwo = 18;
 
 namespace
 {
@@ -59,25 +67,48 @@ void printComplexNumbers(cl::CommandQueue commandQueue,
     }
 
     spdlog::debug(ss.str());
+}
 
-    /*std::vector<float> outputRealValues;
-    std::transform(complexValues.begin(),
-                   complexValues.end(),
-                   std::back_inserter(outputRealValues),
-                   [](const Complex& v) { return v.real(); });*/
+template<typename T>
+void print(cl::CommandQueue commandQueue,
+           cl::Buffer buffer,
+           size_t count,
+           const std::string& title = {})
+{
+    std::vector<T> values;
+    values.resize(count);
+    cl::copy(commandQueue, buffer, values.begin(), values.end());
+
+    std::stringstream ss;
+    ss << (title.empty() ? "Values:" : title.c_str());
+    ss << "\n";
+    for (const auto& value : values)
+    {
+        ss << value << "\n";
+    }
+
+    spdlog::debug(ss.str());
+}
+
+cl::Device getDevice(cl::Context context)
+{
+    const auto devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    ASSERT(devices.size() == 1);
+    return devices[0];
 }
 }
 
 FftCooleyTukeyRadix2::FftCooleyTukeyRadix2(cl::Context context, size_t fftSize)
   : m_context{ context }
+  , m_device{ getDevice(m_context) }
   , m_fftSize{ fftSize }
   , m_stageCount{ getPowerOfTwo(m_fftSize) }
 {
-    if (m_stageCount > MaxFftPowerOfTwo)
-    {
-        throw utils::Exception("FFT size is too big. Max FFT size supported is 2^{}",
-                               MaxFftPowerOfTwo);
-    }
+    /* if (m_stageCount > MaxFftPowerOfTwo)
+     {
+         throw utils::Exception("FFT size is too big. Max FFT size supported is 2^{}",
+                                MaxFftPowerOfTwo);
+     }*/
 
     const auto sourcePath = utils::Asset::getPath(KernelAssetPath);
     const auto source = utils::File::read(sourcePath);
@@ -110,15 +141,24 @@ FftCooleyTukeyRadix2::FftCooleyTukeyRadix2(cl::Context context, size_t fftSize)
           "Failed to build a kernel. Error code: {}\n Error log:\n{}", ex.err(), ss.str());
     }
 
-    // TODO log(m_program);
-
     // allocate two work buffers
     const auto complexNumberSize = 2 * sizeof(cl_float);
     const auto valuesBufferByteCount = m_fftSize * complexNumberSize;
 
     m_buffer1 = { m_context, CL_MEM_READ_WRITE, valuesBufferByteCount };
     m_buffer2 = { m_context, CL_MEM_READ_WRITE, valuesBufferByteCount };
+    m_magnitudesBuffer = { m_context, CL_MEM_READ_WRITE, valuesBufferByteCount / 2 };
+    m_maxValueBuffer = { m_context, CL_MEM_READ_WRITE, valuesBufferByteCount / 2 };
     m_queue = cl::CommandQueue{ m_context };
+
+    // pre-calculate omega buffers
+    for (size_t stageIndex = 0; stageIndex < m_stageCount; ++stageIndex)
+    {
+        const auto subFftHalfSize = 1 << stageIndex;
+        const auto omegas = calc_cpu::FftCooleyTukeyUtils<float>::getOmegas(stageIndex);
+        cl::Buffer omegaBuffer{ m_context, omegas.begin(), omegas.end(), true };
+        m_omegaBuffers.push_back(omegaBuffer);
+    }
 }
 
 FftCooleyTukeyRadix2::~FftCooleyTukeyRadix2()
@@ -144,12 +184,14 @@ void FftCooleyTukeyRadix2::execute(const std::vector<float>& realValues)
       cl::KernelFunctor<cl::Buffer, cl::Buffer>(m_program, "bit_reverse_permutation");
 
     bitReversePermutationKernel(
-      cl::EnqueueArgs(m_queue, cl::NDRange(m_fftSize), cl::NDRange(m_fftSize)),
+      cl::EnqueueArgs(
+        m_queue, cl::NDRange(m_fftSize), cl::NDRange(std::min(m_fftSize, static_cast<size_t>(64)))),
       m_buffer1,
       m_buffer2);
 
     auto fftStageKernel =
-      cl::KernelFunctor<cl::Buffer, cl::Buffer, cl_uint, cl_uint, cl_uint>(m_program, "fft_stage");
+      cl::KernelFunctor<cl::Buffer, cl::Buffer, cl::Buffer, cl_uint, cl_uint, cl_uint>(m_program,
+                                                                                       "fft_stage");
 
     for (size_t stageIndex = 0; stageIndex < m_stageCount; ++stageIndex)
     {
@@ -165,13 +207,21 @@ void FftCooleyTukeyRadix2::execute(const std::vector<float>& realValues)
         const auto subFftHalfSize = subFftSize / 2;
         const auto subFftCount = m_fftSize / subFftSize;
 
+        const auto omegaBuffer = m_omegaBuffers[stageIndex];
+
         const cl::NDRange globalGroupSize{ subFftCount, subFftHalfSize };
 
         const cl::NDRange localGroupSize{ std::min(subFftCount, 64ull),
                                           std::min(subFftHalfSize, 64ull) };
 
-        const cl::EnqueueArgs enqueueArgs(m_queue, globalGroupSize, localGroupSize);
-        fftStageKernel(enqueueArgs, srcBuffer, dstBuffer, subFftSize, subFftCount, stageIndex);
+        const cl::EnqueueArgs enqueueArgs(m_queue, globalGroupSize); //, localGroupSize); // TODO
+        fftStageKernel(enqueueArgs,
+                       srcBuffer,
+                       dstBuffer,
+                       omegaBuffer,
+                       static_cast<cl_uint>(subFftSize),
+                       static_cast<cl_uint>(subFftCount),
+                       static_cast<cl_uint>(stageIndex));
 
         /* spdlog::debug("After stage {}:", stageIndex);
          printComplexNumbers(queue, buffer1, m_fftSize);
@@ -185,38 +235,74 @@ void FftCooleyTukeyRadix2::execute(const std::vector<float>& realValues)
     m_queue.finish();
 }
 
-cl::Buffer FftCooleyTukeyRadix2::getFinalDataBufferGpu()
+cl::Buffer FftCooleyTukeyRadix2::getFftBufferGpu()
 {
     const auto finalOutputBuffer = (m_stageCount % 2 == 0) ? m_buffer2 : m_buffer1;
     return finalOutputBuffer;
 }
 
-std::vector<float> FftCooleyTukeyRadix2::getFinalDataBufferCpu()
+std::vector<std::complex<float>> FftCooleyTukeyRadix2::getFffBufferCpu()
 {
-    // copy the result to host
-    std::vector<Complex> outputComplexValues;
-    outputComplexValues.resize(m_fftSize);
-    cl::copy(
-      m_queue, getFinalDataBufferGpu(), outputComplexValues.begin(), outputComplexValues.end());
-
-    std::vector<float> outputRealValues;
-    std::transform(outputComplexValues.begin(),
-                   outputComplexValues.end(),
-                   std::back_inserter(outputRealValues),
-                   [](const Complex& v) { return v.real(); });
-
-    return outputRealValues;
+    std::vector<Complex> values;
+    values.resize(m_fftSize);
+    cl::copy(m_queue, getFftBufferGpu(), values.begin(), values.end());
+    return values;
 }
 
-void FftCooleyTukeyRadix2::copyFrequenciesTo(cl::Buffer gpuBuffer, cl_uint elementOffset)
+void FftCooleyTukeyRadix2::copyMagnitudesTo(cl::BufferGL openglBuffer,
+                                            cl_uint elementOffset,
+                                            float* maxMagnitude)
 {
-    auto convertComplexToRealKernel =
-      cl::KernelFunctor<cl::Buffer, cl::Buffer, size_t>(m_program, "convert_fft_to_frequencies");
-    const auto copiesCount = m_fftSize / 2;
-    const cl::NDRange globalGroupSize{ copiesCount };
-    const cl::NDRange localGroupSize{ std::min(copiesCount, 64ull) };
-    const cl::EnqueueArgs enqueueArgs(m_queue, globalGroupSize, localGroupSize);
-    convertComplexToRealKernel(enqueueArgs, getFinalDataBufferGpu(), gpuBuffer, elementOffset);
+    const auto valuesCount = m_fftSize / 2;
+
+    // calculate magnitudes
+    {
+        auto calculateMagnitudesKernel =
+          cl::KernelFunctor<cl::Buffer, cl::Buffer>(m_program, "calculate_magnitudes");
+        const cl::NDRange globalGroupSize{ valuesCount };
+        const cl::NDRange localGroupSize{ std::min(valuesCount, static_cast<size_t>(64)) };
+        const cl::EnqueueArgs enqueueArgs(m_queue, globalGroupSize, localGroupSize);
+        calculateMagnitudesKernel(enqueueArgs, getFftBufferGpu(), m_magnitudesBuffer);
+    }
+
+    // find max magnitude
+    if (maxMagnitude)
+    {
+        auto findMaxKernel = cl::Kernel(m_program, "find_max");
+        const auto workGroupSize =
+          findMaxKernel.getWorkGroupInfo<CL_KERNEL_WORK_GROUP_SIZE>(m_device);
+        const cl::NDRange localSize{ workGroupSize };
+        const cl::NDRange globalSize{ valuesCount };
+        const cl::EnqueueArgs enqueueArgs{ m_queue, globalSize, localSize };
+        findMaxKernel.setArg(0, m_magnitudesBuffer);
+        findMaxKernel.setArg(1, sizeof(float) * workGroupSize, nullptr);
+        findMaxKernel.setArg(2, m_maxValueBuffer);
+        m_queue.enqueueNDRangeKernel(findMaxKernel, cl::NullRange, globalSize, localSize);
+
+        const auto reducedMagnitudesCount = valuesCount / workGroupSize;
+        std::vector<float> values;
+        values.resize(reducedMagnitudesCount);
+        cl::copy(m_queue, m_maxValueBuffer, values.begin(), values.end());
+
+        *maxMagnitude = *std::max_element(values.begin(), values.end());
+    }
+
+    // copy magnitudes to the OpenGL buffer
+    {
+        const cl::vector<cl::Memory> memoryObjects{ cl::Memory(openglBuffer.get(), true) };
+
+        // utils::Timer testTimer;
+        m_queue.enqueueAcquireGLObjects(&memoryObjects);
+        // spdlog::trace("enqueueAcquireGLObjects() duration: {}", testTimer.toString());
+
+        m_queue.enqueueCopyBuffer(m_magnitudesBuffer,
+                                  openglBuffer,
+                                  0,
+                                  sizeof(float) * elementOffset,
+                                  sizeof(float) * valuesCount);
+
+        m_queue.enqueueReleaseGLObjects(&memoryObjects);
+    }
 }
 
 cl::Context FftCooleyTukeyRadix2::getContext() const

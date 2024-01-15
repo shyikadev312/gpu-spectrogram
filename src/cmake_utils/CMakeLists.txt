@@ -87,6 +87,36 @@ create_symlink_to("assets")
 
 endmacro()
 
+
+#==============================================================================
+macro(DEFINE_BENCHMARK_MODULE TargetName)
+
+set (TestTargetName "${TargetName}.benchmark")
+
+add_executable(${TestTargetName} "")
+
+file (GLOB_RECURSE COLLECTED_SOURCES "*.cpp")
+target_sources(${TestTargetName} PRIVATE 
+	${COLLECTED_SOURCES}
+)
+
+target_include_directories(${TestTargetName} PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_link_libraries(${TestTargetName}
+	${TargetName}
+)
+
+target_link_libraries(${TestTargetName}
+	benchmark::benchmark_main
+)
+
+create_symlink_to("assets")
+
+endmacro()
+
+
 #==============================================================================
 # Create a symlink in the output directory to some directory in the source tree.
 function(create_symlink_to sourceDirPath)

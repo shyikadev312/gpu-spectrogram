@@ -12,7 +12,7 @@ TEST(WavLoader, Sample1)
 {
     std::ifstream file(utils::Asset::getPath("samples/440Hz_44100Hz_16bit_05sec.wav"));
     const auto audio = WavLoader::load(file);
-    EXPECT_EQ(audio.getBitDepth(), BitDepth::Bit16);
+    EXPECT_EQ(audio.getSampleDataType(), SampleDataType::Int16);
     EXPECT_EQ(audio.getSampleRate(), 44100);
     EXPECT_EQ(audio.getChannelCount(), 1);
     EXPECT_EQ(audio.getSampleCount(), 44100 * 5);

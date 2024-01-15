@@ -61,6 +61,8 @@ TimeFrequencyHeatmapRenderer::TimeFrequencyHeatmapRenderer(
     m_columnWidthUnitsIdx = glGetUniformLocation(m_heatmapShaderProgram, "columnWidthUnits");
     m_valueHeightUnitsIdx = glGetUniformLocation(m_heatmapShaderProgram, "valueHeightUnits");
     m_columnHeightValuesIdx = glGetUniformLocation(m_heatmapShaderProgram, "columnHeightValues");
+    m_minValueIdx = glGetUniformLocation(m_heatmapShaderProgram, "minValue");
+    m_maxValueIdx = glGetUniformLocation(m_heatmapShaderProgram, "maxValue");
 }
 
 TimeFrequencyHeatmapRenderer::~TimeFrequencyHeatmapRenderer()
@@ -78,8 +80,8 @@ void TimeFrequencyHeatmapRenderer::render(RenderContext& renderContext)
     const auto startX = lowerLeft.x;
     const auto endX = upperRight.x;
 
-    const auto startColumn = startX / contSettings.columnsInOneSecond;
-    const auto endColumn = endX / contSettings.columnsInOneSecond;
+    const auto startColumn = startX * contSettings.columnsInOneSecond;
+    const auto endColumn = endX * contSettings.columnsInOneSecond;
 
     const auto visibleHeatmapBuffers =
       m_container->getVisibleBuffers(static_cast<size_t>(std::max(0.0f, startColumn)),
@@ -95,7 +97,8 @@ void TimeFrequencyHeatmapRenderer::render(RenderContext& renderContext)
     for (const auto& heatmapBuffer : visibleHeatmapBuffers)
     {
         // render heatmap chunk:
-        const auto bufferStartSeconds = heatmapBuffer.startColumn * contSettings.columnsInOneSecond;
+        const auto columnWidthSeconds = 1.0f / contSettings.columnsInOneSecond;
+        const auto bufferStartSeconds = heatmapBuffer.startColumn * columnWidthSeconds;
 
         const glm::mat3 worldMatrix{ { bufferWidthSeconds, 0, 0 },
                                      { 0, bufferHeightHertz, 0 },
@@ -120,8 +123,6 @@ void TimeFrequencyHeatmapRenderer::render(RenderContext& renderContext)
         // set OpenGL uniform/SSBO buffer
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, heatmapBuffer.ssbo);
 
-        const auto columnWidthSeconds = 1.0f / contSettings.columnsInOneSecond;
-
         const auto bufferLeftEdgeOffsetX = heatmapBuffer.startColumn * columnWidthSeconds;
         glUniform2f(m_lowerLeftIdx, bufferLeftEdgeOffsetX, constantHeightOffset);
 
@@ -130,7 +131,11 @@ void TimeFrequencyHeatmapRenderer::render(RenderContext& renderContext)
         const auto singleColumnElementHeight = 1.0f / contSettings.valuesInOneHertz;
         glUniform1f(m_valueHeightUnitsIdx, singleColumnElementHeight);
 
-        glUniform1ui(m_columnHeightValuesIdx, contSettings.columnHeightElementCount);
+        glUniform1ui(m_columnHeightValuesIdx,
+                     static_cast<GLuint>(contSettings.columnHeightElementCount));
+
+        glUniform1f(m_minValueIdx, m_scaleMinValue);
+        glUniform1f(m_maxValueIdx, m_scaleMaxValue);
 
         // draw quad
         glBindVertexArray(m_quadVao);
@@ -139,5 +144,31 @@ void TimeFrequencyHeatmapRenderer::render(RenderContext& renderContext)
         glBindBuffer(GL_ARRAY_BUFFER, NoBuffer);
         glBindVertexArray(NoBuffer);
     }
+}
+
+float TimeFrequencyHeatmapRenderer::getScaleMinValue() const
+{
+    return m_scaleMinValue;
+}
+
+void TimeFrequencyHeatmapRenderer::setScaleMinValue(float newMinValue)
+{
+    m_scaleMinValue = newMinValue;
+}
+
+float TimeFrequencyHeatmapRenderer::getScaleMaxValue() const
+{
+    return m_scaleMaxValue;
+}
+
+void TimeFrequencyHeatmapRenderer::setScaleMaxValue(float newMaxValue)
+{
+    m_scaleMaxValue = newMaxValue;
+}
+
+void TimeFrequencyHeatmapRenderer::resetScaleRange()
+{
+    m_scaleMinValue = 0;
+    m_scaleMaxValue = 1e+9; // TODO change
 }
 }

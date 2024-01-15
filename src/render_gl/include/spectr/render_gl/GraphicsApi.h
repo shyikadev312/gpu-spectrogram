@@ -28,6 +28,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#undef None
+
 namespace spectr::render_gl
 {
 using Color = glm::vec4;

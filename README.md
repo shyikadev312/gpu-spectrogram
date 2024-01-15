@@ -117,6 +117,10 @@ List of the project modules (libs):
 * spectr.render_gl - Implementation of rendering with OpenGL.
 * spectr.desktop_app - Main executable, application for rendering the waterfall diagram.
 
+## Tips and tricks
+
+* If you have poor performance on Windows+Nvidia environment, try to disable VSync in Nvidia control panel. There is an issue with OpenCL+OpenGL interop freeze when calling enqueueAcquireGLObjects().
+
 ## Third-party licenses
 
 * GLFW - https://github.com/glfw/glfw - cross-platform window/input framework - Zlib License.
@@ -127,5 +131,6 @@ List of the project modules (libs):
 * glad - https://github.com/Dav1dde/glad - for loading OpenGL functions - MIT license.
 * imgui - https://github.com/ocornut/imgui - for fast GUI rendering - MIT License.
 * Intel One Mono font - https://github.com/intel/intel-one-mono - for GUI rendering - OFL-1.1 license.
+* Google Benchmark - https://github.com/google/benchmark - benchmarking library - Apache-2.0 license.
 
 All licenses are permissive and their usage is allowed for commercial use with the copyright notice provided.

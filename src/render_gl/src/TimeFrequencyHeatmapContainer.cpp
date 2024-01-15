@@ -46,9 +46,9 @@ TimeFrequencyHeatmapBuffer& TimeFrequencyHeatmapContainer::getOrAllocateBuffer(s
     const auto columnSizeBytes = sizeof(float) * m_settings.columnHeightElementCount;
     const auto bufferSizeBytes = columnSizeBytes * m_settings.singleBufferColumnCount;
 
-    //std::vector<float> vals;
-    //vals.resize(200, 5);
-    //glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSizeBytes, vals.data(), GL_DYNAMIC_COPY);
+    // std::vector<float> vals;
+    // vals.resize(200, 5);
+    // glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSizeBytes, vals.data(), GL_DYNAMIC_COPY);
     glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSizeBytes, nullptr, GL_DYNAMIC_COPY);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
@@ -72,5 +72,18 @@ std::vector<TimeFrequencyHeatmapBuffer> TimeFrequencyHeatmapContainer::getVisibl
     }
 
     return visibleBuffers;
+}
+
+void TimeFrequencyHeatmapContainer::tryUpdateMaxValue(float value)
+{
+    if (value > m_globalMaxValue)
+    {
+        m_globalMaxValue = value;
+    }
+}
+
+float TimeFrequencyHeatmapContainer::getMaxValue() const
+{
+    return m_globalMaxValue;
 }
 }

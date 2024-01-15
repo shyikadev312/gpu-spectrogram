@@ -41,7 +41,7 @@ AudioData AudioLoader::load(const std::filesystem::path& audioPath)
 
     if (extension == "wav")
     {
-        std::ifstream file{ audioPath };
+        std::ifstream file{ audioPath, std::ios_base::binary };
         return WavLoader::load(file);
     }
 

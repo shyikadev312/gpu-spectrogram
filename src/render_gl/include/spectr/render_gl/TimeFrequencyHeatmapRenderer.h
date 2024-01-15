@@ -18,11 +18,23 @@ public:
 
     void render(RenderContext& renderContext);
 
+    float getScaleMinValue() const;
+
+    void setScaleMinValue(float newMinValue);
+
+    float getScaleMaxValue() const;
+
+    void setScaleMaxValue(float newMaxValue);
+
+    void resetScaleRange();
+
 private:
     std::shared_ptr<TimeFrequencyHeatmapContainer> m_container;
     GLuint m_quadVbo = NoBuffer;
     GLuint m_quadVao = NoBuffer;
     GLuint m_heatmapShaderProgram = NoShaderProgram;
+    float m_scaleMinValue = 0.0f;
+    float m_scaleMaxValue = 125734344; // 1 << 15;
 
     // Heatmap shader uniforms indices:
     GLint m_localToWorldIdx = NoUniform;
@@ -31,6 +43,8 @@ private:
     GLint m_columnWidthUnitsIdx = NoUniform;
     GLint m_valueHeightUnitsIdx = NoUniform;
     GLint m_columnHeightValuesIdx = NoUniform;
+    GLint m_minValueIdx = NoUniform;
+    GLint m_maxValueIdx = NoUniform;
     // GLint m_Idx = NoUniform;
 };
 }

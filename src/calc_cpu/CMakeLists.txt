@@ -5,3 +5,4 @@ target_link_libraries(spectr.calc_cpu
 )
 
 add_subdirectory(test)
+add_subdirectory(benchmark)

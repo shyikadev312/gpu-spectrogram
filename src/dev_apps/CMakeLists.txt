@@ -1,2 +1,3 @@
 add_subdirectory(OpenclOpenglCoop)
 add_subdirectory(fft_coef_generator)
+add_subdirectory(fft_comparator)

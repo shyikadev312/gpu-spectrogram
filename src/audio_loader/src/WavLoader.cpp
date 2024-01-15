@@ -52,13 +52,13 @@ struct WaveFormatExtensibleChunk
 
 #pragma pack(pop)
 
-BitDepth getBitDepth(size_t bitsPerSample)
+SampleDataType getSampleDataType(size_t bitsPerSample)
 {
     switch (bitsPerSample)
     {
-        case 16: return BitDepth::Bit16;
-        case 32: return BitDepth::Bit32;
-        case 64: return BitDepth::Bit64;
+        case 16: return SampleDataType::Int16;
+        case 32: return SampleDataType::Int32;
+        case 64: return SampleDataType::Int64;
         default:
             throw utils::Exception("Unsupported bit depth per sample value: {}", bitsPerSample);
     }
@@ -164,7 +164,7 @@ AudioData WavLoader::load(std::istream& reader)
     const auto singleChannelDataSize = dataChunk.chunkSize / fmtChunk.numberOfChannels;
     const auto samplesCount = singleChannelDataSize / sampleSize;
 
-    std::vector<uint16_t> channelsData;
+    std::vector<int16_t> channelsData;
     channelsData.resize(samplesCount * fmtChunk.numberOfChannels);
 
     if (sampleSize == 1)
@@ -201,6 +201,6 @@ AudioData WavLoader::load(std::istream& reader)
         throw std::runtime_error("Unsupported sample size.");
     }
 
-    return AudioData(getBitDepth(fmtChunk.bitsPerSample), fmtChunk.sampleRate, { channelsData });
+    return AudioData(fmtChunk.sampleRate, { channelsData });
 }
 }

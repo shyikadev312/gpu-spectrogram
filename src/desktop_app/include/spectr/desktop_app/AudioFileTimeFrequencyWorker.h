@@ -6,8 +6,10 @@
 #include <spectr/audio_loader/AudioData.h>
 
 #include <memory>
-#include <vector>
 #include <queue>
+#include <vector>
+#include <mutex>
+#include <unordered_map>
 
 namespace spectr::desktop_app
 {
@@ -31,15 +33,17 @@ class AudioFileTimeFrequencyWorker
 public:
     AudioFileTimeFrequencyWorker(AudioFileTimeFrequencyWorkerSettings settings);
 
+    void startWork();
+
     void update();
 
 private:
-    void startWork();
-
     void workLoop();
 
 private:
     AudioFileTimeFrequencyWorkerSettings m_settings;
     std::queue<PendingData> m_pendingDatas;
+    std::mutex m_mutex;
+    std::unordered_map<size_t, cl::BufferGL> m_glBuffers;
 };
 }

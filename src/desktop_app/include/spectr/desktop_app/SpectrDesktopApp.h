@@ -1,5 +1,6 @@
 #pragma once
 
+#include <spectr/desktop_app/CameraBoundsController.h>
 #include <spectr/render_gl/AxisRenderer.h>
 #include <spectr/render_gl/Camera.h>
 #include <spectr/render_gl/CheckerGridRenderer.h>
@@ -60,21 +61,24 @@ private:
     void setScale(float secondToPixelCoeff, float frequencyToPixelCoeff);
 
 private:
+    GLFWwindow* m_window = nullptr;
+
     bool isResetScale = true;
     float m_secondToPixelCoeff = 100;
     float m_frequencyToPixelCoeff = 100; // 20000.0f / 1000.0f;
-    GLFWwindow* m_window = nullptr;
+
     std::shared_ptr<render_gl::Camera> m_camera;
     std::shared_ptr<render_gl::RenderContext> m_renderContext;
-    std::unique_ptr<render_gl::AxisRenderer> m_timeLineRenderer;
-    std::unique_ptr<render_gl::AxisRenderer> m_frequencyLineRenderer;
+    std::unique_ptr<render_gl::ScalableAxisRenderer> m_scalableTimeLineRenderer;
     std::unique_ptr<render_gl::ScalableAxisRenderer> m_scalableFrequencyLineRenderer;
     std::unique_ptr<render_gl::CheckerGridRenderer> m_checkerGridRenderer;
-    std::unique_ptr<render_gl::PanTool> m_panTool;
     std::shared_ptr<render_gl::TimeFrequencyHeatmapContainer> m_timeFrequencyHeatmapContainer;
-    std::unique_ptr<render_gl::TimeFrequencyHeatmapRenderer> m_timeFrequencyHeatmapRenderer;
+    std::shared_ptr<render_gl::TimeFrequencyHeatmapRenderer> m_timeFrequencyHeatmapRenderer;
     std::unique_ptr<render_gl::FpsGuard> m_fpsGuard;
+    std::shared_ptr<CameraBoundsController> m_cameraBoundsController;
     bool m_isPanToolEnabled = true;
+    std::unique_ptr<render_gl::PanTool> m_panTool;
+
     std::vector<std::function<void()>> m_onMainLoopActions;
     std::vector<std::function<void(const render_gl::RenderContext&)>> m_onRenderActions;
 };

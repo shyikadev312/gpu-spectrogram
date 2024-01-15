@@ -2,6 +2,18 @@
 
 namespace spectr::render_gl
 {
+namespace
+{
+glm::ivec2 getCursorPosition(GLFWwindow* window, const RenderContext& renderContext)
+{
+    double xpos = 0;
+    double ypos = 0;
+    glfwGetCursorPos(window, &xpos, &ypos);
+    ypos = renderContext.viewportSize.y - ypos;
+    return { static_cast<int>(xpos), static_cast<int>(ypos) };
+}
+}
+
 PanTool::PanTool(std::shared_ptr<render_gl::RenderContext> renderContext)
   : m_renderContext{ renderContext }
 {
@@ -78,26 +90,60 @@ void PanTool::onScroll(GLFWwindow* window, double xoffset, double yoffset)
 
     if (m_isControlPressed)
     {
-        diff.y = 0;
+        diff.y = 1;
     }
     if (m_isShiftPressed)
     {
-        diff.x = 0;
+        diff.x = 1;
     }
 
-    auto newScroll = yoffset > 0 ? currentScroll * diff : currentScroll / diff;
+    glm::ivec2 cursorPositionPixel = getCursorPosition(window, *m_renderContext);
 
+    const auto focusBefore = m_renderContext->pixelToWorld(cursorPositionPixel);
+
+    auto newScroll = yoffset > 0 ? currentScroll * diff : currentScroll / diff;
     camera->setScale(newScroll);
+
+    const auto focusAfter = m_renderContext->pixelToWorld(cursorPositionPixel);
+    const auto scaledCameraPositionDiff = (focusBefore - focusAfter) * camera->getScale();
+
+    camera->setPosition(camera->getPosition() + scaledCameraPositionDiff);
 }
 
 void PanTool::onMouseButton(GLFWwindow* window, int button, int action, int mods)
 {
-    //
+    // if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    //{
+    //     auto& camera = *m_renderContext->camera;
+    //     const auto curPos = m_renderContext->camera->getPosition();
+    //     camera.setPosition(curPos + glm::vec2(10, 0) * camera.getScale());
+
+    //    auto pos2 = camera.getPosition();
+    //}
+
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        m_mouseMoveCameraStartPosition = m_renderContext->camera->getPosition();
+        m_mouseStartPosition = getCursorPosition(window, *m_renderContext);
+        m_isMouseMoving = true;
+    }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    {
+        m_isMouseMoving = false;
+    }
 }
 
 void PanTool::onCursorPosition(GLFWwindow* window, double xpos, double ypos)
 {
-    //
+    if (m_isMouseMoving)
+    {
+        const auto currentCursorPosition = getCursorPosition(window, *m_renderContext);
+        const auto pixelsDiff = currentCursorPosition - m_mouseStartPosition;
+        const auto w1 = m_renderContext->pixelToWorld(m_mouseStartPosition);
+        const auto w2 = m_renderContext->pixelToWorld(currentCursorPosition);
+        const auto worldDiff = (w1 - w2) * m_renderContext->camera->getScale();
+        m_renderContext->camera->setPosition(m_mouseMoveCameraStartPosition + worldDiff);
+    }
 }
 
 void PanTool::onFrame()

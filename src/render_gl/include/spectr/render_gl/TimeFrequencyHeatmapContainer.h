@@ -85,8 +85,16 @@ public:
 
     std::vector<TimeFrequencyHeatmapBuffer> getVisibleBuffers(size_t startColumn, size_t endColumn) const;
 
+    void tryUpdateMaxValue(float value);
+
+    /**
+     * @brief Get max element value through whole container.
+    */
+    float getMaxValue() const;
+
 private:
     TimeFrequencyHeatmapContainerSettings m_settings;
     std::vector<TimeFrequencyHeatmapBuffer> m_buffers;
+    float m_globalMaxValue = 100.0f;
 };
 }
