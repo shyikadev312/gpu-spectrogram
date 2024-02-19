@@ -1,6 +1,6 @@
 #include <spectr/calc_cpu/FftCooleyTukeyRadix2.h>
 
-#include <spectr/audio_loader/AudioDataGenerator.h>
+#include <spectr/audio_loader/SignalDataGenerator.h>
 
 #include <benchmark/benchmark.h>
 
@@ -8,20 +8,21 @@
 
 namespace spectr::calc_cpu::benchmark
 {
-const std::vector<audio_loader::OscillationData> FrequenciesData{
-    audio_loader::OscillationData(4),
-    audio_loader::OscillationData(7),
-    audio_loader::OscillationData(9),
-    audio_loader::OscillationData(13),
+const std::vector<audio_loader::SineWaveInfo> FrequenciesData{
+    audio_loader::SineWaveInfo(4),
+    audio_loader::SineWaveInfo(7),
+    audio_loader::SineWaveInfo(9),
+    audio_loader::SineWaveInfo(13),
 };
 
 void FftCooleyTukeyRadix2CpuBenchmark(::benchmark::State& state)
 {
-    const auto fftSizePowerOfTwo = state.range(0);
-    const auto fftSize = 1 << fftSizePowerOfTwo;
-    const auto audioData =
-      audio_loader::AudioDataGenerator::generate<float>(fftSize, 1, FrequenciesData);
-    const auto& values = audioData.getSampleDataFloat(0);
+    const auto powerOfTwo = state.range(0);
+    const auto fftSize = 1 << powerOfTwo;
+    const auto duration = 1.0f;
+    const auto signalData =
+      audio_loader::SignalDataGenerator::generate<float>(fftSize, duration, FrequenciesData);
+    const auto& values = signalData.getSampleDataFloat(0);
 
     for (auto _ : state)
     {

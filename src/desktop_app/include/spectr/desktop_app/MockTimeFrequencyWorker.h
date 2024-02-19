@@ -1,6 +1,7 @@
 #pragma once
 
 #include <spectr/render_gl/TimeFrequencyHeatmapContainer.h>
+#include <spectr/render_gl/RtsaContainer.h>
 
 #include <chrono>
 #include <memory>
@@ -15,6 +16,7 @@ struct MockTimeFrequencyWorkerSettings
     float updateWidthUnits;
     size_t columnHeight;
     std::shared_ptr<render_gl::TimeFrequencyHeatmapContainer> heatmapContainer;
+    std::shared_ptr<render_gl::RtsaContainer> rtsaHeatmapContainer;
 };
 
 /**

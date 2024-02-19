@@ -7,7 +7,6 @@
 
 #include <iomanip>
 #include <sstream>
-#include <thread>
 
 namespace spectr::desktop_app
 {
@@ -24,7 +23,19 @@ std::pair<float, float> minMax(const std::vector<float>& values)
 AudioFileTimeFrequencyWorker::AudioFileTimeFrequencyWorker(
   AudioFileTimeFrequencyWorkerSettings settings)
   : m_settings{ std::move(settings) }
+  , m_rtsaGlBuffer{ m_settings.fftCalculator->getContext(),
+                    CL_MEM_READ_WRITE,
+                    m_settings.rtsaHeatmapContainer->getBuffer() }
 {
+}
+
+AudioFileTimeFrequencyWorker::~AudioFileTimeFrequencyWorker()
+{
+    if (m_workerThread)
+    {
+        ASSERT(m_workerThread->request_stop());
+        m_workerThread->join();
+    }
 }
 
 void AudioFileTimeFrequencyWorker::update()
@@ -36,7 +47,7 @@ void AudioFileTimeFrequencyWorker::update()
     PendingData calculationInputData;
 
     // calculate fft
-    while (true)
+    for (size_t i = 0; i < m_settings.fftCalculationsInSecond / 3 + 1; ++i)
     {
         utils::Timer globalFftTimer;
 
@@ -111,16 +122,26 @@ void AudioFileTimeFrequencyWorker::update()
 
         float maxMagnitudeLocal = 0;
 
-        // stage: calculate and copy resulting values to buffer
+        // stage: calculate magnitudes
         timer.restart();
+        m_settings.fftCalculator->calculateMagnitudes();
+        spdlog::trace("Magnitudes calculated: {}", timer.toString());
 
+        // stage: copy magnitudes values to final OpenGL buffer
         m_settings.fftCalculator->copyMagnitudesTo(
           openglOpenclBuffer, static_cast<cl_uint>(elementOffsetInBuffer), &maxMagnitudeLocal);
-
-        spdlog::trace("Magnitudes calculated and copied: {}", timer.toString());
+        spdlog::trace("Magnitudes copied: {}", timer.toString());
 
         // TODO add mutex?
         m_settings.heatmapContainer->tryUpdateMaxValue(maxMagnitudeLocal);
+        m_settings.heatmapContainer->setLastFilledColumn(calculationInputData.columnIndex);
+
+        // stage: apply the calculated values to the RTSA heatmap buffer:
+        timer.restart();
+        const auto referenceValue = std::pow(2.0f, 31.0f);
+        m_settings.rtsaUpdater->update(
+          m_settings.fftCalculator->getMagnitudesBuffer(), m_rtsaGlBuffer, referenceValue);
+        spdlog::trace("RTSA updated: {}", timer.toString());
 
         spdlog::trace("Whole spectrogram stage: {}", globalFftTimer.toString());
     }
@@ -128,11 +149,11 @@ void AudioFileTimeFrequencyWorker::update()
 
 void AudioFileTimeFrequencyWorker::startWork()
 {
-    std::thread t(&AudioFileTimeFrequencyWorker::workLoop, this);
-    t.detach();
+    m_workerThread =
+      std::make_unique<std::jthread>([this](std::stop_token stopToken) { workLoop(stopToken); });
 }
 
-void AudioFileTimeFrequencyWorker::workLoop()
+void AudioFileTimeFrequencyWorker::workLoop(std::stop_token stopToken)
 {
     const auto sleepTime = 1.0f / m_settings.fftCalculationsInSecond;
     const auto oneFftSamplesOffset =
@@ -141,7 +162,8 @@ void AudioFileTimeFrequencyWorker::workLoop()
     size_t columnIndex = 0;
     size_t globalSamplesOffset = 0;
 
-    while (globalSamplesOffset + m_settings.oneFftSampleCount < sampleData.size())
+    while (!stopToken.stop_requested() &&
+           globalSamplesOffset + m_settings.oneFftSampleCount < sampleData.size())
     {
         std::this_thread::sleep_for(std::chrono::duration<float>(sleepTime));
 

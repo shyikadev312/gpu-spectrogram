@@ -1,6 +1,6 @@
 #pragma once
 
-#include <spectr/audio_loader/AudioData.h>
+#include <spectr/audio_loader/SignalData.h>
 
 #include <filesystem>
 
@@ -9,8 +9,6 @@ namespace spectr::audio_loader
 class AudioLoader
 {
 public:
-    static AudioData load(const std::filesystem::path& audioPath);
-
-    static AudioData loadAsset(const std::filesystem::path& audioAssetPathRelative);
+    static SignalData load(const std::filesystem::path& audioFilePath);
 };
 }

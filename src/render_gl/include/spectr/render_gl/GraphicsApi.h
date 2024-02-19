@@ -14,8 +14,6 @@
 
 #define GLM_GTC_matrix_transform 1
 
-// #define IMGUI_IMPL_OPENGL_LOADER_CUSTOM 1
-
 #include <glad/glad.h>
 
 #include "../res/bindings/imgui_impl_glfw.h"
@@ -33,4 +31,17 @@
 namespace spectr::render_gl
 {
 using Color = glm::vec4;
+
+constexpr Color makeColor(int r, int g, int b, int a = 255)
+{
+    return { r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f };
+}
+
+struct Range
+{
+    float min;
+    float max;
+
+    inline operator glm::vec2() const { return { min, max }; }
+};
 }

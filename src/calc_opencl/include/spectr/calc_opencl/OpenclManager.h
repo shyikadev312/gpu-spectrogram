@@ -4,22 +4,23 @@
 
 namespace spectr::calc_opencl
 {
+/**
+ * @brief OpenCL manager chooses OpenCL device, creates and initialises OpenCL context.
+ */
 class OpenclManager
 {
 public:
-    OpenclManager();
+    OpenclManager(const std::vector<cl_context_properties>& additionalProperties = {});
 
-    void initContext(const std::vector<cl_context_properties>& additionalProperties = {});
+    cl::Platform getPlatform() const;
 
-    cl::Platform getPlatform();
+    cl::Device getDevice() const;
 
-    cl::Device getDevice();
-
-    cl::Context getContext();
+    cl::Context getContext() const;
 
 private:
-    cl::Platform m_platform{};
-    cl::Device m_device{};
-    cl::Context m_context{};
+    cl::Platform m_platform;
+    cl::Device m_device;
+    cl::Context m_context;
 };
 }

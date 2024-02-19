@@ -1,6 +1,6 @@
-#include <spectr/calc_opencl/FftCooleyTukeyRadix2.h>
+#include <spectr/calc_opencl/FftCooleyTukeyRadix2CL.h>
 
-#include <spectr/audio_loader/AudioDataGenerator.h>
+#include <spectr/audio_loader/SignalDataGenerator.h>
 #include <spectr/calc_opencl/OpenclManager.h>
 
 #include <benchmark/benchmark.h>
@@ -9,22 +9,21 @@
 
 namespace spectr::calc_opencl::benchmark
 {
-const std::vector<audio_loader::OscillationData> FrequenciesData{
-    audio_loader::OscillationData(4),
-    audio_loader::OscillationData(7),
-    audio_loader::OscillationData(9),
-    audio_loader::OscillationData(13),
+const std::vector<audio_loader::SineWaveInfo> FrequenciesData{
+    audio_loader::SineWaveInfo(4),
+    audio_loader::SineWaveInfo(7),
+    audio_loader::SineWaveInfo(9),
+    audio_loader::SineWaveInfo(13),
 };
 
 void FftCooleyTukeyRadix2OpenclBenchmark(::benchmark::State& state)
 {
     OpenclManager openclManager;
-    openclManager.initContext();
 
     const auto fftSizePowerOfTwo = state.range(0);
     const auto fftSize = 1u << fftSizePowerOfTwo;
     const auto audioData =
-      audio_loader::AudioDataGenerator::generate<float>(fftSize, 1, FrequenciesData);
+      audio_loader::SignalDataGenerator::generate<float>(fftSize, 1, FrequenciesData);
     const auto& values = audioData.getSampleDataFloat(0);
 
     FftCooleyTukeyRadix2 fftCalculator{ openclManager.getContext(), fftSize };

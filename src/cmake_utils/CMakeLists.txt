@@ -21,6 +21,12 @@ target_link_libraries(${ModuleName}
 	# Boost::program_options
 )
 
+if(MSVC)
+  target_compile_options(${ModuleName} PRIVATE /W4)
+else()
+  target_compile_options(${ModuleName} PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 endmacro()
 
 #==============================================================================
@@ -46,11 +52,16 @@ target_link_libraries(${ModuleName}
 	spdlog::spdlog
 	imgui::imgui
 	spectr.imgui_my_lib 
-	# Boost::program_options
+	Boost::program_options
 )
 
-endmacro()
+if(MSVC)
+  target_compile_options(${ModuleName} PRIVATE /W4)
+else()
+  target_compile_options(${ModuleName} PRIVATE -Wall -Wextra -Wpedantic)
+endif()
 
+endmacro()
 
 #==============================================================================
 macro(DEFINE_TEST_MODULE TargetName)

@@ -1,4 +1,4 @@
-#include <spectr/audio_loader/AudioData.h>
+#include <spectr/audio_loader/SignalData.h>
 
 #include <spectr/utils/Assert.h>
 
@@ -51,7 +51,7 @@ SampleDataType getSampleDataType(const SampleDataVariant& data)
 }
 }
 
-AudioData::AudioData(size_t sampleRate, std::vector<SampleDataVariant> channelsDatas)
+SignalData::SignalData(size_t sampleRate, std::vector<SampleDataVariant> channelsDatas)
   : m_channelsDatas{ std::move(channelsDatas) }
   , m_sampleRate{ sampleRate }
   , m_sampleCount{ audio_loader::getSampleCount(m_channelsDatas[0]) }
@@ -75,52 +75,52 @@ AudioData::AudioData(size_t sampleRate, std::vector<SampleDataVariant> channelsD
     }
 }
 
-size_t AudioData::getSampleRate() const
+size_t SignalData::getSampleRate() const
 {
     return m_sampleRate;
 }
 
-size_t AudioData::getSampleCount() const
+size_t SignalData::getSampleCount() const
 {
     return m_sampleCount;
 }
 
-SampleDataType AudioData::getSampleDataType() const
+SampleDataType SignalData::getSampleDataType() const
 {
     return audio_loader::getSampleDataType(m_channelsDatas[0]);
 }
 
-size_t AudioData::getChannelCount() const
+size_t SignalData::getChannelCount() const
 {
     return m_channelsDatas.size();
 }
 
-const SampleDataVariant& AudioData::getChannelSampleData(size_t channelIndex) const
+const SampleDataVariant& SignalData::getChannelSampleData(size_t channelIndex) const
 {
     return m_channelsDatas[channelIndex];
 }
 
-const SampleData16& AudioData::getSampleData16(size_t channelIndex) const
+const SampleData16& SignalData::getSampleData16(size_t channelIndex) const
 {
     return std::get<SampleData16>(m_channelsDatas[channelIndex]);
 }
 
-const SampleData32& AudioData::getSampleData32(size_t channelIndex) const
+const SampleData32& SignalData::getSampleData32(size_t channelIndex) const
 {
     return std::get<SampleData32>(m_channelsDatas[channelIndex]);
 }
 
-const SampleData64& AudioData::getSampleData64(size_t channelIndex) const
+const SampleData64& SignalData::getSampleData64(size_t channelIndex) const
 {
     return std::get<SampleData64>(m_channelsDatas[channelIndex]);
 }
 
-const SampleDataFloat& AudioData::getSampleDataFloat(size_t channelIndex) const
+const SampleDataFloat& SignalData::getSampleDataFloat(size_t channelIndex) const
 {
     return std::get<SampleDataFloat>(m_channelsDatas[channelIndex]);
 }
 
-float AudioData::getDuration() const
+float SignalData::getDuration() const
 {
     return static_cast<float>(m_sampleCount) / m_sampleRate;
 }

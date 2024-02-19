@@ -17,4 +17,14 @@ void ImguiUtils::initImgui(GLFWwindow* window)
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 }
+
+bool ImguiUtils::isCursorOverUI()
+{
+    const auto isHovered = ImGui::IsAnyItemFocused() || ImGui::IsAnyItemHovered() ||
+                           ImGui::IsAnyItemActive() ||
+                           ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow |
+                                                  ImGuiHoveredFlags_AllowWhenBlockedByPopup |
+                                                  ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
+    return isHovered;
+}
 }

@@ -3,6 +3,7 @@
 .vscode/
 CMakeLists.txt.user
 CMakeSettings.json
+CMakeUserPresets.json
 
 # Build files
 build/

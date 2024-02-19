@@ -250,7 +250,7 @@ void OpenclUtils::printPlatforms(std::ostream& out)
     }
 }
 
-void OpenclUtils::printPlatform(cl::Platform platform, std::ostream& out)
+void OpenclUtils::printPlatform(const cl::Platform platform, std::ostream& out)
 {
     const auto profile = platform.getInfo<CL_PLATFORM_PROFILE>();
     out << "Profile: " << profile << "\n";
@@ -642,8 +642,8 @@ void OpenclUtils::printDevice(cl::Device device, std::ostream& out)
 #endif
 
     {
-        const auto platformId = device.getInfo<CL_DEVICE_PLATFORM>();
-        out << "Platform Id: " << platformId << "\n";
+        const auto platform = device.getInfo<CL_DEVICE_PLATFORM>();
+        printPlatform(platform, out);
     }
 
     {
@@ -795,5 +795,30 @@ void OpenclUtils::printContextInfo(cl::Context context, std::ostream& out)
             out << toStringProperty(static_cast<cl_uint>(propertyName), propertyValue) << "\n";
         }
     }
+}
+
+cl::Device OpenclUtils::getDevice(cl::Context context)
+{
+    const auto devices = context.getInfo<CL_CONTEXT_DEVICES>();
+    ASSERT(devices.size() == 1);
+    return devices[0];
+}
+
+void OpenclUtils::printComplexNumbers(cl::CommandQueue commandQueue,
+                                      cl::Buffer buffer,
+                                      size_t complexNumbersCount)
+{
+    std::vector<Complex> complexValues;
+    complexValues.resize(complexNumbersCount);
+    cl::copy(commandQueue, buffer, complexValues.begin(), complexValues.end());
+
+    std::stringstream ss;
+    ss << "\nComplex numbers count: " << complexNumbersCount << "\n";
+    for (const auto& complexNumber : complexValues)
+    {
+        ss << complexNumber << "\n";
+    }
+
+    spdlog::debug(ss.str());
 }
 }

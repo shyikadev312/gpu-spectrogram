@@ -5,54 +5,61 @@
 
 namespace spectr::render_gl
 {
-constexpr size_t LogSize = 1024;
+namespace
+{
+constexpr size_t ErrorLogSize = 1024;
+
+GLuint compileShader(const std::vector<std::string>& sources, GLenum shaderType)
+{
+    const auto shaderId = glCreateShader(shaderType);
+
+    std::vector<const GLchar*> sourcePointers;
+    for (auto& source : sources)
+    {
+        sourcePointers.push_back(source.c_str());
+    }
+
+    glShaderSource(shaderId, static_cast<GLsizei>(sources.size()), sourcePointers.data(), NULL);
+    glCompileShader(shaderId);
+
+    int success;
+    char infoLog[ErrorLogSize];
+    glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(shaderId, ErrorLogSize, NULL, infoLog);
+        throw utils::Exception("Vertex shader compilation failed: {}", infoLog);
+    }
+
+    return shaderId;
+}
+}
 
 GLuint OpenGlUtils::createShaderProgram(const std::string& vertexShaderSource,
                                         const std::string& fragmentShaderSource)
 {
-    // compile vertex shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    const char* vertexShaderSourcePtr = vertexShaderSource.c_str();
-    glShaderSource(vertexShader, 1, &vertexShaderSourcePtr, NULL);
-    glCompileShader(vertexShader);
+    return createShaderProgram(std::vector{ vertexShaderSource },
+                               std::vector{ fragmentShaderSource });
+}
 
-    int success;
-    char infoLog[LogSize];
+GLuint OpenGlUtils::createShaderProgram(const std::vector<std::string>& vertexShaderSources,
+                                        const std::vector<std::string>& fragmentShaderSources)
+{
+    const auto vertexShader = compileShader(vertexShaderSources, GL_VERTEX_SHADER);
+    const auto fragmentShader = compileShader(fragmentShaderSources, GL_FRAGMENT_SHADER);
 
-    // check for shader compile errors
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, LogSize, NULL, infoLog);
-        throw utils::Exception("Vertex shader compilation failed: {}", infoLog);
-    }
-
-    // compile fragment shader
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    const char* fragmentShaderSourcePtr = fragmentShaderSource.c_str();
-    glShaderSource(fragmentShader, 1, &fragmentShaderSourcePtr, NULL);
-    glCompileShader(fragmentShader);
-
-    // check for shader compile errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, LogSize, NULL, infoLog);
-        throw utils::Exception("Fragment shader compilation failed: {}", infoLog);
-    }
-
-    // link shaders
     GLuint shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
-    // check for linking errors
+    int success;
+    char infoLog[ErrorLogSize];
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
     if (!success)
     {
-        glGetProgramInfoLog(shaderProgram, LogSize, NULL, infoLog);
-        throw utils::Exception("Shader linking failed: {}", infoLog);
+        glGetProgramInfoLog(shaderProgram, ErrorLogSize, NULL, infoLog);
+        throw utils::Exception("Shader program linking failed: {}", infoLog);
     }
 
     glDeleteShader(vertexShader);

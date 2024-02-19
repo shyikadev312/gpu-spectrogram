@@ -8,7 +8,7 @@
 
 namespace spectr::audio_loader::test
 {
-TEST(WavLoader, Sample1)
+TEST(WavLoader, Load_sample_440Hz)
 {
     std::ifstream file(utils::Asset::getPath("samples/440Hz_44100Hz_16bit_05sec.wav"));
     const auto audio = WavLoader::load(file);

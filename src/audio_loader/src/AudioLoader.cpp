@@ -3,32 +3,29 @@
 #include <spectr/audio_loader/WavLoader.h>
 
 #include <spectr/utils/Assert.h>
-#include <spectr/utils/Asset.h>
 #include <spectr/utils/Exception.h>
 
 #include <algorithm>
-#include <cwctype>
 #include <fstream>
-#include <locale>
 
 namespace spectr::audio_loader
 {
-AudioData AudioLoader::load(const std::filesystem::path& audioPath)
+SignalData AudioLoader::load(const std::filesystem::path& audioFilePath)
 {
-    if (!std::filesystem::exists(audioPath))
+    if (!std::filesystem::exists(audioFilePath))
     {
-        throw utils::Exception("Specified file doesn't exist: {}", audioPath);
+        throw utils::Exception("Specified file doesn't exist: {}", audioFilePath);
     }
 
-    if (std::filesystem::file_size(audioPath) == 0)
+    if (std::filesystem::file_size(audioFilePath) == 0)
     {
-        throw utils::Exception("Specified file is empty (zero bytes): {}", audioPath);
+        throw utils::Exception("Specified file is empty (zero bytes): {}", audioFilePath);
     }
 
-    const auto extensionWithDot = audioPath.extension().string();
+    const auto extensionWithDot = audioFilePath.extension().string();
     if (extensionWithDot.empty())
     {
-        throw utils::Exception("Cannot recognize file type without extension.");
+        throw utils::Exception("Cannot recognize the type of audio file without extension.");
     }
 
     auto extension = extensionWithDot.substr(1);
@@ -39,18 +36,13 @@ AudioData AudioLoader::load(const std::filesystem::path& audioPath)
                    extension.begin(),
                    [](unsigned char c) { return std::tolower(c); });
 
+    std::ifstream file{ audioFilePath, std::ios_base::binary };
+
     if (extension == "wav")
     {
-        std::ifstream file{ audioPath, std::ios_base::binary };
         return WavLoader::load(file);
     }
 
-    throw utils::Exception("Unsupported audio file extensions: {}", extension);
-}
-
-AudioData AudioLoader::loadAsset(const std::filesystem::path& audioAssetPathRelative)
-{
-    const auto audioPath = utils::Asset::getPath(audioAssetPathRelative);
-    return load(audioPath);
+    throw utils::Exception("Unsupported audio file extension: {}", audioFilePath);
 }
 }

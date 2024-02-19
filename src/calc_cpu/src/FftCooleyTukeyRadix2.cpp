@@ -1,7 +1,10 @@
 #include <spectr/calc_cpu/FftCooleyTukeyRadix2.h>
 
+#include <spectr/calc_cpu/FftCooleyTukeyUtils.h>
+
 #include <spectr/utils/Assert.h>
 #include <spectr/utils/Exception.h>
+#include <spectr/utils/Math.h>
 
 #include <algorithm>
 #include <climits>
@@ -71,24 +74,13 @@ const Complex W2n[]{
 };
 // clang-format on
 
-bool isPowerOfTwo(size_t number, size_t& power)
-{
-    power = 0;
-    while (number % 2 == 0)
-    {
-        power++;
-        number /= 2;
-    }
-    return number == 1;
-}
-
 template<typename T>
 void bitReversePermutation(std::vector<T>& values)
 {
     ASSERT(values.size() > 1);
 
     size_t powerOfTwo;
-    ASSERT(isPowerOfTwo(values.size(), powerOfTwo));
+    ASSERT(utils::Math::isPowerOfTwo(values.size(), powerOfTwo));
 
     constexpr auto bitWidth = sizeof(uint32_t) * CHAR_BIT;
     const auto shiftCount = bitWidth - powerOfTwo;
@@ -115,7 +107,7 @@ std::vector<std::complex<float>> FftCooleyTukeyRadix2::getFFT(const std::vector<
     const auto count = realValues.size();
 
     size_t powerOfTwo = 0;
-    if (!isPowerOfTwo(count, powerOfTwo))
+    if (!utils::Math::isPowerOfTwo(count, powerOfTwo))
     {
         throw new utils::Exception("Element count must be power of 2. Count: {}", count);
     }

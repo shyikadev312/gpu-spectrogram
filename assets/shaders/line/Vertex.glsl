@@ -2,10 +2,10 @@
 
 in vec2 pos;
 
-uniform mat3 mvp;
+uniform mat3 ctm;
 
 void main()
 {
-    vec3 pos = mvp * vec3(pos, 1.0);
-    gl_Position = vec4(pos, 1.0);
+    vec3 clipPosition = ctm * vec3(pos, 1.0);
+    gl_Position = vec4(clipPosition, 1.0);
 }

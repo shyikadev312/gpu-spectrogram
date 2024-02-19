@@ -8,5 +8,7 @@ class ImguiUtils
 {
 public:
     static void initImgui(GLFWwindow* window);
+
+    static bool isCursorOverUI();
 };
 }

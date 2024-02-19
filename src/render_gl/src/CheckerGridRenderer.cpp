@@ -81,7 +81,7 @@ void CheckerGridRenderer::render(const RenderContext& renderContext)
     glUseProgram(m_shaderProgram);
 
     const auto mvpInvId = glGetUniformLocation(m_shaderProgram, "mvpInv");
-    const auto mvp = renderContext.camera->getMvpInv();
+    const auto mvp = renderContext.camera->getViewProjectionInv();
     const auto mvpPtr = &mvp[0][0];
     glUniformMatrix3fv(mvpInvId, 1, GL_FALSE, mvpPtr);
 

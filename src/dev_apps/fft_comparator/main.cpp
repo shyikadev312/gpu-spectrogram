@@ -3,9 +3,9 @@
  * for debugging.
  */
 
-#include <spectr/audio_loader/AudioDataGenerator.h>
+#include <spectr/audio_loader/SignalDataGenerator.h>
 #include <spectr/calc_cpu/FftCooleyTukeyRadix2.h>
-#include <spectr/calc_opencl/FftCooleyTukeyRadix2.h>
+#include <spectr/calc_opencl/FftCooleyTukeyRadix2CL.h>
 #include <spectr/calc_opencl/OpenclManager.h>
 #include <spectr/calc_opencl/OpenclUtils.h>
 #include <spectr/utils/Exception.h>
@@ -82,10 +82,6 @@ int main()
     glfwSetKeyCallback(window, key_callback);
 
     // initialization of OpenCL context from OpenGL context
-    calc_opencl::OpenclManager openclManager;
-
-    cl::Platform platform = openclManager.getPlatform();
-
 #if defined(OS_WINDOWS)
     const std::vector<cl_context_properties> openclContextProperties{
         CL_GL_CONTEXT_KHR,
@@ -102,17 +98,17 @@ int main()
     };
 #endif
 
-    openclManager.initContext(openclContextProperties);
-    auto context = openclManager.getContext();
-
+    calc_opencl::OpenclManager openclManager(openclContextProperties);
     calc_opencl::OpenclUtils::printPlatformsAndDevices(std::cout);
-    // calc_opencl::OpenclUtils::printContextInfo(context, std::cout);
+
+    auto context = openclManager.getContext();
+    calc_opencl::OpenclUtils::printContextInfo(context, std::cout);
 
     // const auto audioData = audio_loader::AudioDataGenerator::generate(16, 1, { { 4 } });
-    //  const auto audioData = audio_loader::AudioDataGenerator::generate(1, 64, { { 0.25f } });
-    //  const auto audioData = audio_loader::AudioDataGenerator::generate(8, 1, { { 2.31f } });
+    // const auto audioData = audio_loader::AudioDataGenerator::generate(1, 64, { { 0.25f } });
+    // const auto audioData = audio_loader::AudioDataGenerator::generate(8, 1, { { 2.31f } });
 
-    const auto audioData = audio_loader::AudioDataGenerator::generate<float>(1024, 2, { { 4 } });
+    const auto audioData = audio_loader::SignalDataGenerator::generate<float>(1024, 2, { { 4 } });
     const auto realValues = audioData.getSampleDataFloat(0);
 
     // const std::vector<float> realValues{ 1, 2, 3, 4, 5, 6, 7, 8 };

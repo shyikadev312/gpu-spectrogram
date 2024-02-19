@@ -55,6 +55,11 @@ TimeFrequencyHeatmapBuffer& TimeFrequencyHeatmapContainer::getOrAllocateBuffer(s
     TimeFrequencyHeatmapBuffer buffer{ bufferStartColumn, bufferEndColumn, ssbo };
     m_buffers.push_back(buffer);
 
+    if (m_buffers.size() > m_settings.maxBuffersCount)
+    {
+        m_buffers.erase(m_buffers.begin());
+    }
+
     return m_buffers.back();
 }
 
@@ -82,8 +87,47 @@ void TimeFrequencyHeatmapContainer::tryUpdateMaxValue(float value)
     }
 }
 
+void TimeFrequencyHeatmapContainer::setLastFilledColumn(size_t columnIndex)
+{
+    m_lastFilledColumn = columnIndex;
+}
+
 float TimeFrequencyHeatmapContainer::getMaxValue() const
 {
     return m_globalMaxValue;
+}
+
+Range TimeFrequencyHeatmapContainer::getTimeRange() const
+{
+    if (m_buffers.empty())
+    {
+        return { 0, 0 };
+    }
+
+    const auto columnWidth = 1.0f / m_settings.columnsInOneSecond;
+
+    const auto& firstBuffer = m_buffers.front();
+    const auto minX = firstBuffer.startColumn * columnWidth;
+
+    const auto maxX = m_lastFilledColumn * columnWidth;
+
+    return { minX, maxX };
+}
+
+Range TimeFrequencyHeatmapContainer::getFrequencyRange() const
+{
+    const auto minY = 0;
+
+    const auto elementHeight = 1.0f / m_settings.valuesInOneHertz;
+    const auto maxY = m_settings.columnHeightElementCount * elementHeight;
+
+    return { minY, maxY };
+}
+
+glm::vec2 TimeFrequencyHeatmapContainer::getColumnSize() const
+{
+    const auto columnWidth = 1.0f / m_settings.columnsInOneSecond;
+    const auto columnHeight = m_settings.columnHeightElementCount / m_settings.valuesInOneHertz;
+    return { columnWidth, columnHeight };
 }
 }

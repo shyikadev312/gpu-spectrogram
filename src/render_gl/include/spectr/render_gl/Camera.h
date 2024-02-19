@@ -6,20 +6,31 @@ namespace spectr::render_gl
 {
 /**
  * @brief Camera for the 2D area.
- * @details Since camera is 2D only, the Z coordinate and rotation are not present.
+ * @details Since camera is 2D only, the Z coordinates are not present, projection matrix is
+ * identity matrix, and the transformation matrices are 3x3.
  */
 class Camera
 {
 public:
-    Camera();
+    /**
+     * @brief Get view-projection matrix (world space to clip space transformation matrix).
+     */
+    const glm::mat3 getViewProjection() const;
 
-    const glm::mat3 getMvp() const;
+    /**
+     * @brief Get inverted view-projection matrix (clip space to world space transformation matrix).
+     */
+    const glm::mat3 getViewProjectionInv() const;
 
-    const glm::mat3 getMvpInv() const;
+    /**
+     * @brief Get camera position in world coordinates.
+     */
+    const glm::vec2 getPositionWorld() const;
 
-    const glm::vec2& getPosition() const;
-
-    void setPosition(const glm::vec2& position);
+    /**
+     * @brief Set camera position in world coordinates.
+     */
+    void setPositionWorld(const glm::vec2& position);
 
     const glm::vec2& getScale() const;
 
@@ -32,6 +43,11 @@ public:
     float getScaleY() const;
 
     void setScaleY(float scaleY);
+
+    /**
+     * @brief Get viewport size in world units.
+     */
+    glm::vec2 getViewportSize() const;
 
 private:
     glm::vec2 m_scale{ 1.0f, 1.0f };

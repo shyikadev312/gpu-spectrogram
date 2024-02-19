@@ -1,4 +1,4 @@
-#include <spectr/calc_opencl/FftCooleyTukeyRadix2.h>
+#include <spectr/calc_opencl/FftCooleyTukeyRadix2CL.h>
 
 #include <spectr/calc_opencl/OpenclManager.h>
 #include <spectr/calc_opencl/OpenclUtils.h>
@@ -29,7 +29,6 @@ public:
         spdlog::set_level(spdlog::level::debug);
 
         OpenclManager openclManager;
-        openclManager.initContext();
         auto context = openclManager.getContext();
 
         // OpenclUtils::printContextInfo(context, std::cout);

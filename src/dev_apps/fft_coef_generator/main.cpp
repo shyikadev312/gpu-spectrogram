@@ -30,7 +30,7 @@ int main()
     std::vector<Complex> omegaValues;
     for (size_t i = 0; i < FftSizeTwoPower + 1; ++i)
     {
-        const auto omega = spectr::calc_cpu::FftCooleyTukeyUtils<double>::getOmegaMultiplier(i - 1);
+        const auto omega = spectr::calc_cpu::FftCooleyTukeyUtils::getOmegaMultiplier<double>(i - 1);
         omegaValues.push_back(omega);
     }
 
@@ -42,7 +42,7 @@ int main()
     {
         std::cout << "// Stage " << (stageIndex + 1) << " omega values:\n";
 
-        const auto omegas = spectr::calc_cpu::FftCooleyTukeyUtils<double>::getOmegas(stageIndex);
+        const auto omegas = spectr::calc_cpu::FftCooleyTukeyUtils::getOmegas<double>(stageIndex);
         print(omegas);
     }
 

@@ -16,6 +16,10 @@ public:
      */
     float getTime() const;
 
+    /**
+     * @brief Get passed time in milliseconds since the timer creation.
+     * @return Time in milliseconds.
+     */
     float getMs() const;
 
     void restart();

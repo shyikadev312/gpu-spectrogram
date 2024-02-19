@@ -1,0 +1,18 @@
+#pragma once
+
+namespace spectr::utils
+{
+#define SPECTR_VERSION_MAJOR @Spectr_VERSION_MAJOR@
+#define SPECTR_VERSION_MINOR @Spectr_VERSION_MINOR@
+#define SPECTR_VERSION_PATCH @Spectr_VERSION_PATCH@
+#define BUILD_COMMIT_HASH @BUILD_COMMIT_HASH@
+
+#define STR(x) #x
+#define STR_EVAL(x) STR(x)
+
+#define VERSION(major, minor, patch) major ## . ## minor ## . ## patch
+#define VERSION_EVAL(x,y,z) VERSION(x,y,z)
+
+#define SPECTR_VERSION STR_EVAL(VERSION_EVAL(SPECTR_VERSION_MAJOR, SPECTR_VERSION_MINOR, SPECTR_VERSION_PATCH))
+
+}

@@ -31,7 +31,18 @@ void Timer::restart()
 std::string Timer::toString() const
 {
     std::stringstream ss;
-    ss << std::fixed << std::setprecision(2) << getMs() << " ms.";
+
+    const auto seconds = getTime();
+    if (seconds > 1.0f)
+    {
+        ss << std::fixed << std::setprecision(3) << seconds << " s.";
+    }
+    else
+    {
+        const auto ms = seconds * 1000.0f;
+        ss << std::fixed << std::setprecision(2) << ms << " ms.";
+    }
+
     return ss.str();
 }
 }

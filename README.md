@@ -10,8 +10,9 @@ This repository belongs to the Nuand GPU accelerated spectogram project.
 - [How to build](#How-to-build)
     - [How to build on Windows](#How-to-build-on-Windows)
     - [How to build on Linux](#How-to-build-on-Linux)
-- [Third-party licenses](#Third-party-licenses)
 - [Project structure](#Project-structure)
+- [Tips and tricks](#Tips-and-tricks)
+- [Third-party licenses](#Third-party-licenses)
 
 ## Supported platforms
 
@@ -27,7 +28,7 @@ The next architectures are supported:
 * AMD64
 
 The next compilers are supported:
-* C++17 compilers (msvc, g++, clang of corresponding version)
+* C++20 compilers (msvc, g++, clang)
 
 ## How to build
 
@@ -35,13 +36,14 @@ The next compilers are supported:
 
 Required software:
 
-* C++17 compiler (Visual Studio 2022)
+* C++20 compiler (Visual Studio 2022)
 * CMake (latest version is recommended)
 * Python3 (latest version is recommended)
-* Conan 1.x (1.62 version is verified. Don't install Conan major version 2)
+* Conan 1.x (1.62 version is verified. DON'T INSTALL Conan major version 2)
+* Latest graphics card driver installed (or latest OpenCL driver installed)
 
-Install Conan package manager. It is required to install exactly major version 1.
-Don't install Conan version 2, it has some breaking changes, and these instructions won't work.
+Use Python pip to install the Conan package manager. It is required to install exactly major version 1.
+Don't install Conan version 2, it has some breaking changes, and it's not fully stable yet, and these instructions won't work.
 
 ```shell
 sudo pip install conan==1.62
@@ -61,10 +63,11 @@ cmake --build .
 
 Required software:
 
-* C++17 compiler (g++, clang)
+* C++20 compiler (g++, clang)
 * CMake
 * Python3
-* Conan 1.x (1.62 version is verified. Don't install Conan major version 2)
+* Conan 1.x (1.62 version is verified. DON'T INSTALL Conan major version 2)
+* Latest graphics card driver installed (or latest OpenCL driver installed)
 
 Shell commands to install the required software:
 
@@ -105,20 +108,13 @@ cmake --build .
 
 ## Project structure
 
-All source code files are placed under "./src" dir. The project is splitted into bunch of submodules that are built into libs and executables.
+Project structure and architecture are described in the [Architecture section](./docs/Architecture.md).
 
-All assets are placed under "./assets" dir. It includes shaders for OpenGL, kernels for OpenCL, fonts for ImGUI, audio samples for debugging.
+## Problems, tips and tricks
 
-List of the project modules (libs):
-* spectr.utils - Set of some utility methods and classes.
-* spectr.audio_loader - Audio loader that can load WAV audio files as raw sample buffers.
-* spectr.calc_cpu - Implementation of calculations on CPU.
-* spectr.calc_opencl - Implementation of calculations on GPU with OpenCL.
-* spectr.render_gl - Implementation of rendering with OpenGL.
-* spectr.desktop_app - Main executable, application for rendering the waterfall diagram.
-
-## Tips and tricks
-
+* Use Conan 1.x,. Don't install Conan 2.0, it's not fully stable yet.
+* Ensure that you have a powerful discrete GPU with the newest drivers installed.
+* Ensure that your GPU has an OpenCL support.
 * If you have poor performance on Windows+Nvidia environment, try to disable VSync in Nvidia control panel. There is an issue with OpenCL+OpenGL interop freeze when calling enqueueAcquireGLObjects().
 
 ## Third-party licenses
@@ -132,5 +128,9 @@ List of the project modules (libs):
 * imgui - https://github.com/ocornut/imgui - for fast GUI rendering - MIT License.
 * Intel One Mono font - https://github.com/intel/intel-one-mono - for GUI rendering - OFL-1.1 license.
 * Google Benchmark - https://github.com/google/benchmark - benchmarking library - Apache-2.0 license.
+* OpenCL headers - https://github.com/KhronosGroup/OpenCL-Headers - OpenCL API - Apache-2.0 license.
+* OpenCL Cpp headers - https://github.com/KhronosGroup/OpenCL-CLHPP - OpenCL C++ API - Apache-2.0 license.
+* OpenCL ISD loader - https://github.com/KhronosGroup/OpenCL-ICD-Loader - OpenCL driver loader - Apache-2.0 license.
+* Boost - https://www.boost.org/ - extensions of C++ standard library - Boost Software License.
 
 All licenses are permissive and their usage is allowed for commercial use with the copyright notice provided.

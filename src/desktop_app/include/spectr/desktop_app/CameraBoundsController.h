@@ -15,6 +15,10 @@ public:
 
     void setBounds(const glm::vec2& lowerLeft, const glm::vec2& upperRight);
 
+    void setBoundsX(const glm::vec2& boundsX);
+    
+    void setBoundsY(const glm::vec2& boundsY);
+
     float getMinX() const;
     float getMaxX() const;
     float getMinY() const;

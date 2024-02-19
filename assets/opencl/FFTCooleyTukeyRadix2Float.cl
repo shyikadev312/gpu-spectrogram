@@ -1,3 +1,8 @@
+// Dummy defines for source editor (not used in runtime):
+#ifndef BIT_REVERSE_SHIFT_VALUE
+#define BIT_REVERSE_SHIFT_VALUE 26
+#endif
+
 uint bitReverse(uint v) // TODO compare performance with lookup table
 {
    // swap odd and even bits
@@ -24,23 +29,20 @@ float2 complexMultiply(float2 a, float2 b)
 }
 
 __kernel void bit_reverse_permutation(
-   __global float2* input,
+   __global const float2* input,
    __global float2* output
    )
 {
    uint globalId = get_global_id(0);
    uint i1 = globalId;
    uint i2 = bitReverse(globalId);
-   if (globalId < FFT_SIZE) //?
-   {
-      output[i2] = input[i1];
-   }
+   output[i2] = input[i1];
 }
 
 __kernel void fft_stage(
-   __global float2* input,
+   __global const float2* input,
    __global float2* output,
-   __global float2* omegaValues,
+   __global const float2* omegaValues,
    uint subFftSize,
    uint subFftCount,
    uint stageIndex
@@ -65,7 +67,7 @@ __kernel void fft_stage(
 }
 
 __kernel void calculate_magnitudes(
-   __global float2* fft,
+   __global const float2* fft,
    __global float* magnitudes
    )
 {
@@ -74,7 +76,7 @@ __kernel void calculate_magnitudes(
 }
 
 __kernel void find_max(
-   __global float* values,
+   __global const float* values,
    __local float* temp,
    __global float* output
    )

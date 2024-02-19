@@ -1,4 +1,4 @@
-#include <spectr/calc_opencl/FftCooleyTukeyRadix2.h>
+#include <spectr/calc_opencl/FftCooleyTukeyRadix2CL.h>
 #include <spectr/calc_opencl/OpenclManager.h>
 #include <spectr/calc_opencl/OpenclUtils.h>
 #include <spectr/render_gl/GraphicsApi.h>
@@ -48,10 +48,6 @@ int main()
     glfwSetKeyCallback(window, key_callback);
 
     // initialization of OpenCL context from OpenGL context
-    calc_opencl::OpenclManager openclManager;
-
-    cl::Platform platform = openclManager.getPlatform();
-
 #if defined(OS_WINDOWS)
     const std::vector<cl_context_properties> openclContextProperties{
         CL_GL_CONTEXT_KHR,
@@ -67,7 +63,9 @@ int main()
         reinterpret_cast<cl_context_properties>(glfwGetX11Display()),
     };
 #endif
-    openclManager.initContext(openclContextProperties);
+
+    calc_opencl::OpenclManager openclManager(openclContextProperties);
+
     auto context = openclManager.getContext();
 
     calc_opencl::OpenclUtils::printPlatformsAndDevices(std::cout);
@@ -90,6 +88,7 @@ int main()
 
     glFinish();
 
+    fftOpenCl.calculateMagnitudes();
     fftOpenCl.copyMagnitudesTo(openglOpenclBuffer, 0);
 
     //

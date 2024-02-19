@@ -26,17 +26,23 @@ enum class SampleDataType
     Double,
 };
 
-class AudioData
+/**
+ * @brief Container of raw signal data for N channels.
+ */
+class SignalData
 {
 public:
-    AudioData() = default;
+    SignalData() = default;
 
-    AudioData(size_t sampleRate, std::vector<SampleDataVariant> channelsDatas);
+    SignalData(size_t sampleRate, std::vector<SampleDataVariant> channelsDatas);
 
     size_t getSampleRate() const;
 
     size_t getSampleCount() const;
 
+    /**
+     * @brief Get data type which is used for storing the signal values.
+     */
     SampleDataType getSampleDataType() const;
 
     size_t getChannelCount() const;
@@ -61,5 +67,4 @@ private:
     const size_t m_sampleRate = 0;
     const size_t m_sampleCount = 0;
 };
-
 }

@@ -7,7 +7,7 @@ namespace spectr::desktop_app
 class MinMaxWidget
 {
 public:
-    MinMaxWidget();
+    MinMaxWidget(ImFont* font);
 
     void setRange(float globalMin, float globalMax);
 
@@ -18,6 +18,7 @@ public:
     float getMax() const;
 
 private:
+    ImFont* m_font = nullptr;
     float m_globalMin = 0;
     float m_globalMax = 1;
     float m_currentMin = 0;

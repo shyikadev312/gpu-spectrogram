@@ -66,19 +66,17 @@ SampleDataType getSampleDataType(size_t bitsPerSample)
 
 } // namespace
 
-AudioData WavLoader::load(std::istream& reader)
+SignalData WavLoader::load(std::istream& reader)
 {
     WavHeader wavHeader;
     reader.read(reinterpret_cast<char*>(&wavHeader), sizeof(WavHeader));
-    // reader.read(wavHeader.signatureRiff, sizeof(wavHeader.signatureRiff));
-    // reader >> wavHeader.signatureRiff >> wavHeader.fileSize >> wavHeader.signatureWave;
 
     if (strncmp(wavHeader.signatureRiff, "RIFF", sizeof(wavHeader.signatureRiff)) != 0)
     {
         throw std::runtime_error("Invalid format Riff signature.");
     }
 
-    // todo check for file size
+    // TODO check for file size
 
     if (strncmp(wavHeader.signatureWave, "WAVE", sizeof(wavHeader.signatureWave)) != 0)
     {
@@ -164,43 +162,24 @@ AudioData WavLoader::load(std::istream& reader)
     const auto singleChannelDataSize = dataChunk.chunkSize / fmtChunk.numberOfChannels;
     const auto samplesCount = singleChannelDataSize / sampleSize;
 
-    std::vector<int16_t> channelsData;
-    channelsData.resize(samplesCount * fmtChunk.numberOfChannels);
+    std::vector<SampleDataVariant> channelsData;
+    channelsData.reserve(fmtChunk.numberOfChannels);
 
-    if (sampleSize == 1)
+    if (sampleSize == 2)
     {
-        char buffer;
-        for (size_t valueIndex = 0; valueIndex < dataChunk.chunkSize; ++valueIndex)
+        for (size_t i = 0; i < fmtChunk.numberOfChannels; ++i)
         {
-            reader.read(&buffer, sampleSize);
-            const int16_t value = static_cast<int16_t>(buffer);
-            channelsData[valueIndex] = value;
-        }
-    }
-    else if (sampleSize == 2)
-    {
-        reader.read(reinterpret_cast<char*>(channelsData.data()), dataChunk.chunkSize);
-    }
-    else if (sampleSize == 3)
-    {
-        size_t valueIndex = 0;
-        constexpr int32_t max24bit = (256 * 256 * 256) - 1;
-
-        for (size_t i = 0; i < dataChunk.chunkSize; i += 3)
-        {
-            uint32_t value = 0;
-            reader.read(reinterpret_cast<char*>(&value), 3);
-            const auto ratio = static_cast<float>(value) / static_cast<float>(max24bit);
-            uint16_t finalVal = static_cast<uint16_t>(ratio * std::numeric_limits<uint16_t>::max());
-            channelsData[valueIndex] = finalVal;
-            ++valueIndex;
+            SampleData16 samples;
+            samples.resize(samplesCount);
+            reader.read(reinterpret_cast<char*>(samples.data()), samplesCount);
+            channelsData.push_back(std::move(samples));
         }
     }
     else
     {
-        throw std::runtime_error("Unsupported sample size.");
+        throw utils::Exception("Unsupported sample size: ", sampleSize);
     }
 
-    return AudioData(fmtChunk.sampleRate, { channelsData });
+    return SignalData(fmtChunk.sampleRate, std::move(channelsData));
 }
 }

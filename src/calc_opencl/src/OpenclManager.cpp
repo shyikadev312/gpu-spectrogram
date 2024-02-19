@@ -2,7 +2,6 @@
 
 #include <spectr/calc_opencl/OpenclUtils.h>
 
-#include <spectr/utils/Asset.h>
 #include <spectr/utils/Exception.h>
 
 #include <spdlog/spdlog.h>
@@ -13,40 +12,13 @@ namespace spectr::calc_opencl
 {
 namespace
 {
-std::string toString(cl_device_type type)
+void notifyCallback(const char* errorInfo, const void* privateInfo, size_t cb, void* userData)
 {
-    switch (type)
-    {
-        case CL_DEVICE_TYPE_DEFAULT: return "Default";
-        case CL_DEVICE_TYPE_ALL: return "All";
-        case CL_DEVICE_TYPE_CPU: return "CPU";
-        case CL_DEVICE_TYPE_GPU: return "CPU";
-        case CL_DEVICE_TYPE_ACCELERATOR: return "Accelerator";
-        default: throw std::runtime_error("Invalid device type value.");
-    }
-}
-
-std::string toString(const std::vector<cl_semaphore_payload_khr> values)
-{
-    std::stringstream ss;
-    for (size_t i = 0; i < values.size(); ++i)
-    {
-        ss << std::to_string(values[i]);
-        if (i != values.size() - 1)
-        {
-            ss << "x";
-        }
-    }
-    return ss.str();
-}
-
-void openclCallback(const char* errinfo, const void* private_info, size_t cb, void* user_data)
-{
-    spdlog::error(errinfo);
+    spdlog::error(errorInfo);
 }
 }
 
-OpenclManager::OpenclManager()
+OpenclManager::OpenclManager(const std::vector<cl_context_properties>& additionalProperties)
 {
     std::stringstream ss;
     OpenclUtils::printPlatformsAndDevices(ss);
@@ -88,10 +60,7 @@ OpenclManager::OpenclManager()
     const auto& selected = candidates.front();
     m_platform = selected.first;
     m_device = selected.second;
-}
 
-void OpenclManager::initContext(const std::vector<cl_context_properties>& additionalProperties)
-{
     const cl_platform_id platformId = m_platform();
 
     std::vector<cl_context_properties> properties{
@@ -101,26 +70,24 @@ void OpenclManager::initContext(const std::vector<cl_context_properties>& additi
     properties.insert(properties.end(), additionalProperties.begin(), additionalProperties.end());
     properties.push_back(0);
 
-    m_context = cl::Context(m_device, properties.data(), openclCallback, nullptr);
-    // cl::Context::setDefault(m_context);
+    m_context = cl::Context(m_device, properties.data(), notifyCallback);
 }
 
-cl::Platform OpenclManager::getPlatform()
+cl::Platform OpenclManager::getPlatform() const
 {
     ASSERT_MESSAGE(m_platform(), "Platform is nullptr.");
     return m_platform;
 }
 
-cl::Device OpenclManager::getDevice()
+cl::Device OpenclManager::getDevice() const
 {
     ASSERT_MESSAGE(m_device(), "Device is nullptr.");
     return m_device;
 }
 
-cl::Context OpenclManager::getContext()
+cl::Context OpenclManager::getContext() const
 {
     ASSERT_MESSAGE(m_context(), "Context is nullptr.");
     return m_context;
 }
-
 }

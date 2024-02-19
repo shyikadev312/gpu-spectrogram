@@ -9,9 +9,9 @@ namespace
 constexpr float Eps = 1e-5f;
 }
 
-MinMaxWidget::MinMaxWidget()
+MinMaxWidget::MinMaxWidget(ImFont* font)
+  : m_font{ font }
 {
-    //
 }
 
 void MinMaxWidget::setRange(float globalMin, float globalMax)
@@ -30,15 +30,23 @@ void MinMaxWidget::setRange(float globalMin, float globalMax)
 
 void MinMaxWidget::render(const render_gl::RenderContext& renderContext)
 {
+    ImGui::PushFont(m_font);
+
     ImGui::Begin("Min-max spectrogram values:", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::SliderFloat("Min ", &m_currentMin, m_globalMin, m_globalMax);
-    ImGui::SliderFloat("Max ", &m_currentMax, m_globalMin, m_globalMax);
+    ImGui::Text("Min");
+    ImGui::SameLine();
+    ImGui::SliderFloat("##Min", &m_currentMin, m_globalMin, m_globalMax);
+    ImGui::Text("Max");
+    ImGui::SameLine();
+    ImGui::SliderFloat("##Max", &m_currentMax, m_globalMin, m_globalMax);
     ImGui::End();
 
     if (m_currentMax < m_currentMin)
     {
         m_currentMax = m_currentMin;
     }
+
+    ImGui::PopFont();
 }
 
 float MinMaxWidget::getMin() const

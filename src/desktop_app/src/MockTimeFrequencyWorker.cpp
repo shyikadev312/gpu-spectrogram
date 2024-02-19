@@ -86,15 +86,20 @@ void MockTimeFrequencyWorker::addNextColumn(const std::vector<float>& values)
     const auto dataSize = values.size() * sizeof(float);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer.ssbo);
-
-    // TODO glMapBufferRange or glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, size, data); //to
-    // update partially
     GLvoid* p = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, offsetBytes, dataSize, GL_MAP_WRITE_BIT);
-    // GLvoid* p = glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
     memcpy(p, values.data(), dataSize);
     glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    const auto maxValue = std::max_element(values.begin(), values.end());
+    container->tryUpdateMaxValue(*maxValue);
+    container->setLastFilledColumn(m_nextColumnIndex);
+
+    // apply values to RTSA density heatmap 
+    
+
+    // m_settings.rtsaHeatmapContainer->apply(values);
 
     ++m_nextColumnIndex;
 }

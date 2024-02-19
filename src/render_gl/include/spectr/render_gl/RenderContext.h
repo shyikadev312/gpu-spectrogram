@@ -9,7 +9,9 @@ namespace spectr::render_gl
 class RenderContext
 {
 public:
-    // to clip or to ndc?
+    // Since the rendering mode is 2D and projection is absent (orthographic), clip space and ndc
+    // space are the same.
+
     glm::vec3 ndcToWorld(const glm::vec2 ndcCoords) const;
 
     glm::vec2 worldToNdc(const glm::vec3 worldCoords) const;
@@ -24,6 +26,6 @@ public:
 
     std::shared_ptr<Camera> camera;
 
-    glm::ivec2 viewportSize;
+    glm::ivec2 viewportSize{};
 };
 }
