@@ -14,7 +14,7 @@
 #include <spectr/utils/Exception.h>
 #include <spectr/utils/Version.h>
 
-#include <spdlog/spdlog.h>
+// #include <spdlog/spdlog.h>
 
 #include <iostream>
 #include <limits>
@@ -29,7 +29,7 @@ const auto WindowTitle = "Spectrogram renderer";
 
 std::vector<cl_context_properties> getOpenCLContextProperties(GLFWwindow* window)
 {
-#if defined(OS_WINDOWS)
+#ifdef _WIN32
     const std::vector<cl_context_properties> openclContextProperties{
         CL_GL_CONTEXT_KHR,
         reinterpret_cast<cl_context_properties>(glfwGetWGLContext(window)),
@@ -47,7 +47,7 @@ std::vector<cl_context_properties> getOpenCLContextProperties(GLFWwindow* window
     return openclContextProperties;
 }
 
-DesktopAppSettings parseCommandLineArguments(int argc, char* argv[])
+DesktopAppSettings parseCommandLineArguments(int argc, const char* argv[])
 {
     constexpr bool HardcodeInput = true;
     if (!HardcodeInput)
@@ -55,7 +55,8 @@ DesktopAppSettings parseCommandLineArguments(int argc, char* argv[])
         return CmdArgumentParser::parse(argc, argv);
     }
 
-    spdlog::warn("Using hardcoded input values!");
+    // spdlog::warn("Using hardcoded input values!");
+    std::cout << "Using hardcoded input values!";
 
     DesktopAppSettings settings;
     settings.fftCalculationPerSecond = 50;
@@ -88,7 +89,7 @@ DesktopAppSettings parseCommandLineArguments(int argc, char* argv[])
 }
 }
 
-int SpectrDesktopApp::main(int argc, char* argv[])
+int SpectrDesktopApp::main(int argc, const char* argv[])
 {
     try
     {
@@ -97,19 +98,21 @@ int SpectrDesktopApp::main(int argc, char* argv[])
     }
     catch (const std::exception& ex)
     {
-        spdlog::critical("Uncaught exception: {}", ex.what());
+        // spdlog::critical("Uncaught exception: {}", ex.what());
+        std::cerr << "Uncaught exception: " << ex.what() << std::endl;
         return EXIT_FAILURE;
     }
     catch (...)
     {
-        spdlog::critical("Uncaught non-exception throw.");
+        // spdlog::critical("Uncaught non-exception throw.");
+        std::cerr << "Uncaught non-exception throw." << std::endl;
         return EXIT_FAILURE;
     }
 }
 
-int SpectrDesktopApp::mainImpl(int argc, char* argv[])
+int SpectrDesktopApp::mainImpl(int argc, const char* argv[])
 {
-    spdlog::set_level(spdlog::level::debug);
+    // spdlog::set_level(spdlog::level::debug);
     const auto settings = parseCommandLineArguments(argc, argv);
 
     if (settings.command == Command::PrintHelp)
@@ -124,10 +127,14 @@ int SpectrDesktopApp::mainImpl(int argc, char* argv[])
         return EXIT_SUCCESS;
     }
 
-    spdlog::info("Spectr launched.");
-    spdlog::info("Input signal file: {}", settings.audioFilePath);
-    spdlog::info("FFT size: {}", settings.fftSize);
-    spdlog::info("FFT calculations per second: {}", settings.fftCalculationPerSecond);
+    // spdlog::info("Spectr launched.");
+    // spdlog::info("Input signal file: {}", settings.audioFilePath);
+    // spdlog::info("FFT size: {}", settings.fftSize);
+    // spdlog::info("FFT calculations per second: {}", settings.fftCalculationPerSecond);
+    std::cout << "Spectr launched.";
+    std::cout << "Input signal file: " << settings.audioFilePath;
+    std::cout << "FFT size: " << settings.fftSize;
+    std::cout << "FFT calculations per second: " << settings.fftCalculationPerSecond;
 
     initGraphics();
     initFftCalculator(settings);
@@ -289,11 +296,15 @@ void SpectrDesktopApp::initFftCalculator(const DesktopAppSettings& settings)
         //  audio_loader::AudioDataGenerator::generate<int16_t>(4096, 30, { { 23.1234, 32000 } });
         //  audio_loader::AudioDataGenerator::generate<int16_t>(1024, 2, { { 4, 100 } });
 
-        spdlog::info("Loaded signal data:\n"
-                     "\tSample rate: {} Hz\n"
-                     "\tDuration: {} seconds\n",
-                     audioData.getSampleRate(),
-                     audioData.getDuration());
+        // spdlog::info("Loaded signal data:\n"
+        //              "\tSample rate: {} Hz\n"
+        //              "\tDuration: {} seconds\n",
+        //              audioData.getSampleRate(),
+        //              audioData.getDuration());
+
+        std::cout << "Loaded signal data:\n"
+                     "\tSample rate: " << audioData.getSampleRate() << " Hz\n"
+                     "\tDuration: " << audioData.getDuration() << " seconds" << std::endl;
 
         ASSERT(audioData.getSampleDataType() == audio_loader::SampleDataType::Int16);
 

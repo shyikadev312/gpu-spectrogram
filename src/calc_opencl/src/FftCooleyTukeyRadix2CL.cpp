@@ -7,8 +7,6 @@
 #include <spectr/utils/File.h>
 #include <spectr/utils/Timer.h>
 
-#include <spdlog/spdlog.h>
-
 #include <algorithm>
 #include <cmath>
 #include <sstream>

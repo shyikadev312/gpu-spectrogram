@@ -4,6 +4,23 @@
 CMakeLists.txt.user
 CMakeSettings.json
 CMakeUserPresets.json
+*.user
+x64
+Audio Loader.lib
+Calc CPU.lib
+Calc OpenCL.lib
+GL Renderer.lib
+ImGui.lib
+ImGui.ini
+Utils.lib
+Audio Loader.pdb
+Calc CPU.pdb
+Calc OpenCL.pdb
+GL Renderer.pdb
+ImGui.pdb
+Utils.pdb
+spectr.pdb
+spectr.exe
 
 # Build files
 build/

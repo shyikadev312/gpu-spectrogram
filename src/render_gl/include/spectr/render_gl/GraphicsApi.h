@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(OS_WINDOWS)
+#ifdef _WIN32
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -8,7 +8,7 @@
 #elif defined(OS_LINUX)
 #define GLFW_EXPOSE_NATIVE_X11
 #define GLFW_EXPOSE_NATIVE_GLX
-#elif
+#else
 #error "Unsupported OpenGL platform."
 #endif
 
@@ -16,8 +16,14 @@
 
 #include <glad/glad.h>
 
-#include "../res/bindings/imgui_impl_glfw.h"
-#include "../res/bindings/imgui_impl_opengl3.h"
+#ifdef _WIN32
+# include <GL/glext.h>
+# include <backends/imgui_impl_glfw.h>
+# include <backends/imgui_impl_opengl3.h>
+#else
+# include "../res/bindings/imgui_impl_glfw.h"
+# include "../res/bindings/imgui_impl_opengl3.h"
+#endif
 #include <imgui.h>
 
 #include <GLFW/glfw3.h>

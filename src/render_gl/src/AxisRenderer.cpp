@@ -7,7 +7,7 @@
 #include <spectr/utils/Exception.h>
 #include <spectr/utils/File.h>
 
-#include <fmt/format.h>
+#include <format>
 #include <glm/gtc/type_ptr.hpp>
 
 #include <cmath>
@@ -170,9 +170,9 @@ void AxisRenderer::render(const RenderContext& renderContext)
 
         auto digitsCount = static_cast<int>(std::log10(markStep));
         digitsCount = digitsCount > 0 ? 0 : -digitsCount;
-        const auto formatString = fmt::format("{{:.{}f}}", digitsCount);
-        const auto valueText = fmt::format(fmt::runtime(formatString), currentAxisCoordinate);
-        const auto labelText = fmt::format("{}{}", valueText, m_suffix);
+        const auto formatString = std::format("{{:.{}f}}", digitsCount);
+        const auto valueText = std::vformat(formatString, std::make_format_args(currentAxisCoordinate));
+        const auto labelText = std::format("{}{}", valueText, m_suffix);
         renderMark(worldCoordinate, labelText, renderContext);
     }
 }

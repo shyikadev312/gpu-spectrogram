@@ -2,7 +2,7 @@
 
 #include <spectr/render_gl/ImguiUtils.h>
 
-#include <fmt/format.h>
+#include <format>
 
 #include <thread>
 
@@ -23,7 +23,7 @@ void FpsGuard::onRender()
     ImGui::PushFont(m_font);
     ImGui::Begin("FPS info");
     const auto seconds = std::chrono::duration<float>(m_lastFrameDuration);
-    const auto text = fmt::format("Frame duration: {:.3f} s.", seconds.count());
+    const auto text = std::format("Frame duration: {:.3f} s.", seconds.count());
     ImGui::Text(text.c_str());
     // ImGui::Text("FPS: ");
     ImGui::End();

@@ -4,7 +4,7 @@
 
 #include <spectr/utils/Exception.h>
 
-#include <spdlog/spdlog.h>
+// #include <spdlog/spdlog.h>
 
 #include <sstream>
 
@@ -14,7 +14,8 @@ namespace
 {
 void notifyCallback(const char* errorInfo, const void* privateInfo, size_t cb, void* userData)
 {
-    spdlog::error(errorInfo);
+    // spdlog::error(errorInfo);
+    std::cerr << errorInfo << std::endl;
 }
 }
 
@@ -22,7 +23,8 @@ OpenclManager::OpenclManager(const std::vector<cl_context_properties>& additiona
 {
     std::stringstream ss;
     OpenclUtils::printPlatformsAndDevices(ss);
-    spdlog::trace(ss.str());
+    // spdlog::trace(ss.str());
+    std::cout << ss.str() << std::endl;
 
     std::vector<cl::Platform> platforms;
     ASSERT_CL_SUCCESS(cl::Platform::get(&platforms));

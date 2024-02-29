@@ -819,6 +819,7 @@ void OpenclUtils::printComplexNumbers(cl::CommandQueue commandQueue,
         ss << complexNumber << "\n";
     }
 
-    spdlog::debug(ss.str());
+    // spdlog::debug(ss.str());
+    std::cout << ss.str() << std::endl;
 }
 }

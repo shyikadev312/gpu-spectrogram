@@ -3,8 +3,7 @@
 #include <stdexcept>
 #include <string>
 
-#include <fmt/format.h>
-#include <fmt/std.h>
+#include <format>
 
 namespace spectr::utils
 {
@@ -18,12 +17,12 @@ public:
     Exception(const std::string& str);
 
     template<typename... Args>
-    Exception(fmt::format_string<Args...> formatString, Args&&... args);
+    Exception(std::string formatString, Args&&... args);
 };
 
 template<typename... Args>
-Exception::Exception(fmt::format_string<Args...> formatString, Args&&... args)
-  : std::runtime_error(fmt::vformat(formatString, fmt::make_format_args(args...)))
+Exception::Exception(std::string formatString, Args&&... args)
+  : std::runtime_error(std::vformat(formatString, std::make_format_args(args...)))
 {
 }
 }

@@ -2,7 +2,7 @@
 
 #include <spectr/utils/Exception.h>
 
-#include <fmt/format.h>
+#include <format>
 
 #include <cstdint>
 #include <cstdlib>
@@ -155,7 +155,7 @@ SignalData WavLoader::load(std::istream& reader)
     if (fmtChunk.audioFormat != WAVE_FORMAT_PCM)
     {
         throw std::runtime_error(
-          fmt::format("Unsupported WAVE format = {}. Only PCM supported.", fmtChunk.audioFormat));
+          std::format("Unsupported WAVE format = {}. Only PCM supported.", fmtChunk.audioFormat));
     }
 
     const auto sampleSize = fmtChunk.getBytesPerSample();

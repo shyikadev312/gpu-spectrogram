@@ -2,7 +2,7 @@ DEFINE_MODULE(spectr.utils)
 
 # Retreive git commit hash and put it to the Version header:
 execute_process(
-    COMMAND git rev-parse HEAD
+    COMMAND echo 10000
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     OUTPUT_VARIABLE revisionOutput)
 

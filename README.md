@@ -16,18 +16,20 @@ This repository belongs to the Nuand GPU accelerated spectogram project.
 
 ## Supported platforms
 
-The next OS are supported:
+The following OS are supported:
 * Windows
 * Linux
 
-The next OS are verified:
+The following OS are verified:
+* Windows 10
 * Windows 11
 * Ubuntu 22.04
+* Ubuntu 24.04
 
-The next architectures are supported:
+The following architectures are supported:
 * AMD64
 
-The next compilers are supported:
+The following compilers are supported:
 * C++20 compilers (msvc, g++, clang)
 
 ## How to build
@@ -37,27 +39,13 @@ The next compilers are supported:
 Required software:
 
 * C++20 compiler (Visual Studio 2022)
-* CMake (latest version is recommended)
-* Python3 (latest version is recommended)
-* Conan 1.x (1.62 version is verified. DON'T INSTALL Conan major version 2)
 * Latest graphics card driver installed (or latest OpenCL driver installed)
 
-Use Python pip to install the Conan package manager. It is required to install exactly major version 1.
-Don't install Conan version 2, it has some breaking changes, and it's not fully stable yet, and these instructions won't work.
+Compilation steps:
 
-```shell
-sudo pip install conan==1.62
-```
-
-How to build from command line:
-
-```cmd
-cd gpu-spectrogram
-mkdir build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build .
-```
+1. Open `GPU Spectrogram.sln` in Visual Studio 2022
+2. Ensure the correct build profile is set (either `Debug x64` or `Release x64`)
+3. Build (Go to `Build` -> `Build Solution` or press `F7`)
 
 ### How to build on Linux
 
@@ -80,7 +68,6 @@ sudo apt install nvidia-opencl-dev -y
 
 sudo apt install libgl1-mesa-dev libx11-xcb-dev libfontenc-dev libxcb-cursor-dev libice-dev libsm-dev libxaw7-dev libxcomposite-dev libxcursor-dev libxdamage-dev libxext-dev libxfixes-dev libxi-dev libxinerama-dev libxkbfile-dev libxmu-dev libxmuu-dev libxpm-dev libxrandr-dev libxrender-dev libxres-dev libxss-dev libxt-dev libxtst-dev libxv-dev libxvmc-dev libxxf86vm-dev libxcb-xkb-dev libxcb-icccm4-dev libxcb-keysyms1-dev libxcb-randr0-dev libxcb-shape0-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-xinerama0-dev libxcb-dri3-dev uuid-dev libxcb-util-dev libxcb-util0-dev -y
 
-sudo apt update
 sudo apt upgrade -y
 ```
 

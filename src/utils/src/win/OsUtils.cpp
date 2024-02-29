@@ -1,4 +1,4 @@
-#if OS_WINDOWS
+#ifdef _WIN32
 
 #include <spectr/utils/Assert.h>
 #include <spectr/utils/OsUtils.h>
@@ -14,11 +14,15 @@ namespace
 {
 std::filesystem::path getExecutablePath()
 {
+    return std::filesystem::current_path();
+
+    // why would anyone ever do this
+    /*
     size_t pathLength = 0;
     std::vector<char> buffer(MAX_PATH, '\0');
     while (true)
     {
-        pathLength = GetModuleFileName(NULL, buffer.data(), static_cast<DWORD>(buffer.size()));
+        pathLength = GetModuleFileNameA(NULL, buffer.data(), static_cast<DWORD>(buffer.size()));
         if (pathLength == 0)
         {
             throw std::runtime_error("Failed to get executable path.");
@@ -33,6 +37,7 @@ std::filesystem::path getExecutablePath()
         buffer.resize(buffer.size() * 2, '\0');
     }
     return std::filesystem::path{ buffer.data(), buffer.data() + pathLength };
+    */
 }
 }
 

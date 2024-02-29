@@ -2,8 +2,6 @@
 
 #include <spectr/render_gl/ImguiUtils.h>
 
-#include <fmt/format.h>
-
 namespace spectr::desktop_app
 {
 HeatmapCursorInfo::HeatmapCursorInfo(std::shared_ptr<Input> input,

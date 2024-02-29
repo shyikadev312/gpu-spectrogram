@@ -24,10 +24,10 @@ namespace spectr::desktop_app
 class SpectrDesktopApp
 {
 public:
-    static int main(int argc, char* argv[]);
+    static int main(int argc, const char* argv[]);
 
 private:
-    int mainImpl(int argc, char* argv[]);
+    int mainImpl(int argc, const char* argv[]);
 
     void initGraphics();
 

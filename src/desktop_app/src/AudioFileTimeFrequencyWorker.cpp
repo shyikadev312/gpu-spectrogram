@@ -3,8 +3,6 @@
 #include <spectr/calc_cpu/FftCooleyTukeyRadix2.h>
 #include <spectr/utils/Timer.h>
 
-#include <spdlog/spdlog.h>
-
 #include <iomanip>
 #include <sstream>
 
@@ -68,9 +66,11 @@ void AudioFileTimeFrequencyWorker::update()
 
         m_settings.fftCalculator->execute(calculationInputData.values);
 
-        spdlog::trace("FFT calculation, size: {}, time: {}",
-                      calculationInputData.values.size(),
-                      timer.toString());
+        // spdlog::trace("FFT calculation, size: {}, time: {}",
+        //               calculationInputData.values.size(),
+        //               timer.toString());
+
+        std::cout << "FFT calculation, size: " << calculationInputData.values.size() << ", time: " << timer.toString() << std::endl;
 
         // const auto fftResultGpu = m_settings.fftCalculator->getFffBufferCpu();
         // const auto magnitudesGPU =
@@ -125,12 +125,14 @@ void AudioFileTimeFrequencyWorker::update()
         // stage: calculate magnitudes
         timer.restart();
         m_settings.fftCalculator->calculateMagnitudes();
-        spdlog::trace("Magnitudes calculated: {}", timer.toString());
+        // spdlog::trace("Magnitudes calculated: {}", timer.toString());
+        std::cout << "Magnitudes calculated: " << timer.toString() << std::endl;
 
         // stage: copy magnitudes values to final OpenGL buffer
         m_settings.fftCalculator->copyMagnitudesTo(
           openglOpenclBuffer, static_cast<cl_uint>(elementOffsetInBuffer), &maxMagnitudeLocal);
-        spdlog::trace("Magnitudes copied: {}", timer.toString());
+        // spdlog::trace("Magnitudes copied: {}", timer.toString());
+        std::cout << "Magnitudes copied: " << timer.toString() << std::endl;
 
         // TODO add mutex?
         m_settings.heatmapContainer->tryUpdateMaxValue(maxMagnitudeLocal);
@@ -141,9 +143,11 @@ void AudioFileTimeFrequencyWorker::update()
         const auto referenceValue = std::pow(2.0f, 31.0f);
         m_settings.rtsaUpdater->update(
           m_settings.fftCalculator->getMagnitudesBuffer(), m_rtsaGlBuffer, referenceValue);
-        spdlog::trace("RTSA updated: {}", timer.toString());
+        // spdlog::trace("RTSA updated: {}", timer.toString());
+        std::cout << "RTSA updated: " << timer.toString() << std::endl;
 
-        spdlog::trace("Whole spectrogram stage: {}", globalFftTimer.toString());
+        // spdlog::trace("Whole spectrogram stage: {}", globalFftTimer.toString());
+        std::cout << "Whole spectrogram stage: " << globalFftTimer.toString() << std::endl;
     }
 }
 

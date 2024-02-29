@@ -71,7 +71,7 @@ std::vector<TimeFrequencyHeatmapBuffer> TimeFrequencyHeatmapContainer::getVisibl
     for (const auto& buffer : m_buffers)
     {
         if (buffer.endColumn >= startColumn && buffer.startColumn <= endColumn)
-        {
+            {
             visibleBuffers.push_back(buffer);
         }
     }

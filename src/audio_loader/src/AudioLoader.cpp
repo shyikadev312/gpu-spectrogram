@@ -14,12 +14,12 @@ SignalData AudioLoader::load(const std::filesystem::path& audioFilePath)
 {
     if (!std::filesystem::exists(audioFilePath))
     {
-        throw utils::Exception("Specified file doesn't exist: {}", audioFilePath);
+        throw utils::Exception("Specified file doesn't exist: {}", audioFilePath.string());
     }
 
     if (std::filesystem::file_size(audioFilePath) == 0)
     {
-        throw utils::Exception("Specified file is empty (zero bytes): {}", audioFilePath);
+        throw utils::Exception("Specified file is empty (zero bytes): {}", audioFilePath.string());
     }
 
     const auto extensionWithDot = audioFilePath.extension().string();
@@ -43,6 +43,6 @@ SignalData AudioLoader::load(const std::filesystem::path& audioFilePath)
         return WavLoader::load(file);
     }
 
-    throw utils::Exception("Unsupported audio file extension: {}", audioFilePath);
+    throw utils::Exception("Unsupported audio file extension: {}", audioFilePath.string());
 }
 }

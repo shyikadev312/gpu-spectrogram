@@ -4,7 +4,7 @@
 #include <spectr/desktop_app/RtsaViewSettingsWidget.h>
 #include <spectr/utils/Asset.h>
 
-#include <fmt/format.h>
+#include <format>
 
 using namespace std::placeholders;
 
@@ -120,8 +120,8 @@ RtsaWindow::RtsaWindow(std::shared_ptr<Input> input,
         }
 
         std::stringstream ss;
-        ss << fmt::format("Frequency: {}", frequencyCoord) << std::endl;
-        ss << fmt::format("dBFS: {}", dbfs) << std::endl;
+        ss << std::format("Frequency: {}", frequencyCoord) << std::endl;
+        ss << std::format("dBFS: {}", dbfs) << std::endl;
         return ss.str();
     };
 

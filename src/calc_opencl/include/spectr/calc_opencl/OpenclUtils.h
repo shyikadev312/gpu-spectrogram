@@ -2,7 +2,7 @@
 
 #include <spectr/calc_opencl/OpenclApi.h>
 
-#include <spdlog/spdlog.h>
+// #include <spdlog/spdlog.h>
 
 #include <complex>
 #include <iostream>
@@ -53,7 +53,8 @@ public:
             ss << value << "\n";
         }
 
-        spdlog::debug(ss.str());
+        // spdlog::debug(ss.str());
+        std::cout << ss.str() << std::endl;
     }
 
     static void printComplexNumbers(cl::CommandQueue commandQueue,
