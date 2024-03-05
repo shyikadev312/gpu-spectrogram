@@ -5,20 +5,19 @@ add_library(${ModuleName} STATIC "")
 
 target_include_directories(${ModuleName} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(${ModuleName} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(${ModuleName} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include)
 
 file (GLOB_RECURSE COLLECTED_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 target_sources(${ModuleName} PRIVATE
 	${COLLECTED_SOURCES})
 
 target_link_libraries(${ModuleName}
-	fmt::fmt
 	glm::glm
 	glfw
 	glad::glad
 	spdlog::spdlog
 	imgui::imgui
 	spectr.imgui_my_lib
-	# Boost::program_options
 )
 
 if(MSVC)
@@ -37,7 +36,7 @@ add_executable(${ModuleName} "")
 target_include_directories(${ModuleName} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_include_directories(${ModuleName} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_include_directories(${ModuleName} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(${ModuleName} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include)
 
 # file (GLOB_RECURSE COLLECTED_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
 file (GLOB_RECURSE COLLECTED_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
@@ -45,14 +44,12 @@ target_sources(${ModuleName} PRIVATE
 	${COLLECTED_SOURCES})
 
 target_link_libraries(${ModuleName}
-	fmt::fmt
 	glm::glm
 	glfw
 	glad::glad
 	spdlog::spdlog
 	imgui::imgui
 	spectr.imgui_my_lib 
-	Boost::program_options
 )
 
 if(MSVC)

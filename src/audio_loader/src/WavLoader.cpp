@@ -3,6 +3,7 @@
 #include <spectr/utils/Exception.h>
 
 #include <format>
+#include <string.h>
 
 #include <cstdint>
 #include <cstdlib>

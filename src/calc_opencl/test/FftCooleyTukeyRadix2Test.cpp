@@ -34,7 +34,7 @@ public:
         // OpenclUtils::printContextInfo(context, std::cout);
 
         FftCooleyTukeyRadix2 fftOpenCl(context, inputRealValues.size());
-        fftOpenCl.execute(inputRealValues);
+        fftOpenCl.execute(inputRealValues.data());
         const auto v = fftOpenCl.getFffBufferCpu();
         return v;
     }

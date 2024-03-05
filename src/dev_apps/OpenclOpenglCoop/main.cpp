@@ -73,7 +73,7 @@ int main()
 
     const std::vector<float> realValues{ 1, 2, 3, 4 };
     calc_opencl::FftCooleyTukeyRadix2 fftOpenCl(openclManager.getContext(), realValues.size());
-    fftOpenCl.execute(realValues);
+    fftOpenCl.execute(realValues.data());
 
     // create OpenGL buffer
     GLuint ssbo = 0;

@@ -18,7 +18,7 @@ public:
      * @brief Executes FFT on GPU, then returns.
      * @param realValues Array of real values of function f(x).
      */
-    void execute(const std::vector<float>& functionValues);
+    void execute(const float* functionValues);
 
     /**
      * @brief Get GPU OpenCL buffer with FFT complex values. Must be called after execute(). //TODO?

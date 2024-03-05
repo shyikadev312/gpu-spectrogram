@@ -15,9 +15,9 @@
 #define GLM_GTC_matrix_transform 1
 
 #include <glad/glad.h>
+#include <GL/glext.h>
 
 #ifdef _WIN32
-# include <GL/glext.h>
 # include <backends/imgui_impl_glfw.h>
 # include <backends/imgui_impl_opengl3.h>
 #else

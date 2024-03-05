@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.22)
 project(Spectr VERSION 0.0.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -44,8 +44,6 @@ conan_cmake_install(PATH_OR_REFERENCE ${PROJECT_SOURCE_DIR}
                     SETTINGS ${settings})
 
 # Third party dependencies
-find_package(Boost REQUIRED)
-find_package(fmt REQUIRED)
 find_package(glm REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(glfw3 REQUIRED)

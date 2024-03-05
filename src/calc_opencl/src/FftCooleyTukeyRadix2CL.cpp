@@ -81,19 +81,20 @@ cl::Context FftCooleyTukeyRadix2::getContext() const
     return m_context;
 }
 
-void FftCooleyTukeyRadix2::execute(const std::vector<float>& realValues)
+void FftCooleyTukeyRadix2::execute(const float* realValues)
 {
-    if (realValues.size() != m_fftSize)
-    {
-        throw utils::Exception(
-          "Actual values count doesn't equal to the expected FFT elements count. Expected: {}",
-          m_fftSize);
-    }
+    // if (realValues.size() != m_fftSize)
+    // {
+    //     throw utils::Exception(
+    //       "Actual values count doesn't equal to the expected FFT elements count. Expected: {}",
+    //       m_fftSize);
+    // }
 
     // copy the signal data to the first buffer
-    std::vector<Complex> complexValues(realValues.begin(), realValues.end());
+    std::vector<Complex> complexValues(realValues, &realValues[m_fftSize]);
     complexValues[0] = { 1 };
     complexValues[1] = { 2 };
+    delete[] realValues;
 
     // TODO non-blocking copy?
     cl::copy(m_queue, complexValues.begin(), complexValues.end(), m_workBuffers[0]);

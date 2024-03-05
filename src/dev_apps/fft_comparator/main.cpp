@@ -113,7 +113,7 @@ int main()
 
     // const std::vector<float> realValues{ 1, 2, 3, 4, 5, 6, 7, 8 };
     calc_opencl::FftCooleyTukeyRadix2 fftOpenCl(openclManager.getContext(), realValues.size());
-    fftOpenCl.execute(realValues);
+    fftOpenCl.execute(realValues.data());
 
     const auto fftCpu = calc_cpu::FftCooleyTukeyRadix2::getFFT(realValues);
     const auto fftGpu = fftOpenCl.getFffBufferCpu();

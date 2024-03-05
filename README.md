@@ -51,7 +51,7 @@ Compilation steps:
 
 Required software:
 
-* C++20 compiler (g++, clang)
+* C++20 compiler (g++ 13.0 or newer, clang 15.0 or newer)
 * CMake
 * Python3
 * Conan 1.x (1.62 version is verified. DON'T INSTALL Conan major version 2)

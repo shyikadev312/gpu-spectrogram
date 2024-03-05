@@ -30,7 +30,7 @@ void FftCooleyTukeyRadix2OpenclBenchmark(::benchmark::State& state)
 
     for (auto _ : state)
     {
-        fftCalculator.execute(values);
+        fftCalculator.execute(values.data());
     }
 }
 }

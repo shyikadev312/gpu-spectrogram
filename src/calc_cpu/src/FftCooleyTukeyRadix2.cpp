@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <climits>
 #include <complex>
+#include <stdint.h>
 
 namespace spectr::calc_cpu
 {

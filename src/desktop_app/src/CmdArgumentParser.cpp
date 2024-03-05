@@ -6,6 +6,7 @@
 
 #include <format>
 #include <string>
+#include <cstring>
 
 #include <stdarg.hpp>
 

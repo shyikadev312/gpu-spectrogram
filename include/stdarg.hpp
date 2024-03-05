@@ -92,7 +92,7 @@ namespace stdarg {
                 aliases_string = str;
             }
 
-            return lhs << "    " << aliases_string << std::setw(alias_string_length - aliases_string.size() + 1) << std::setfill(' ') << ' ' << description << std::endl;
+            return lhs << "    " << aliases_string << std::setw(alias_string_length - aliases_string.size() + 1) << std::setfill(' ') << ' ' << rhs.description << std::endl;
         }
     };
 

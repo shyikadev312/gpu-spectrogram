@@ -25,6 +25,9 @@ spectr.exe
 # Build files
 build/
 out/
+CMakeFiles/
+CMakeCache.txt
+*.cmake
 
 # Temp files
 temp/

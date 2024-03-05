@@ -30,7 +30,7 @@ struct AudioFileTimeFrequencyWorkerSettings
 struct PendingData
 {
     size_t columnIndex;
-    std::vector<float> values;
+    float* values;
 };
 
 class AudioFileTimeFrequencyWorker

@@ -70,7 +70,7 @@ void AudioFileTimeFrequencyWorker::update()
         //               calculationInputData.values.size(),
         //               timer.toString());
 
-        std::cout << "FFT calculation, size: " << calculationInputData.values.size() << ", time: " << timer.toString() << std::endl;
+        std::cout << "FFT calculation, size: " << m_settings.oneFftSampleCount << ", time: " << timer.toString() << std::endl;
 
         // const auto fftResultGpu = m_settings.fftCalculator->getFffBufferCpu();
         // const auto magnitudesGPU =
@@ -172,17 +172,16 @@ void AudioFileTimeFrequencyWorker::workLoop(std::stop_token stopToken)
         std::this_thread::sleep_for(std::chrono::duration<float>(sleepTime));
 
         // create input data for FFT
-        std::vector<float> inputData;
+        float* inputData = new float[m_settings.oneFftSampleCount];
+        size_t globalIndex = globalSamplesOffset;
         for (size_t i = 0; i < m_settings.oneFftSampleCount; ++i)
         {
-            const auto globalIndex = globalSamplesOffset + i;
-            const auto value = static_cast<float>(sampleData[globalIndex]);
-            inputData.push_back(value);
+            inputData[i] = (float)sampleData[globalIndex++];
         }
 
         {
             std::lock_guard lock{ m_mutex };
-            m_pendingDatas.push(PendingData{ columnIndex, std::move(inputData) });
+            m_pendingDatas.push(PendingData{ columnIndex, inputData });
         }
 
         ++columnIndex;
