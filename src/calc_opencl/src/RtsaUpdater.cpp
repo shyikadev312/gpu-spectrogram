@@ -1,5 +1,7 @@
 #include <spectr/calc_opencl/RtsaUpdater.h>
 
+#include <spectr/render_gl/GraphicsApi.h>
+
 #include <spectr/utils/Asset.h>
 #include <spectr/utils/Exception.h>
 #include <spectr/utils/File.h>
@@ -15,7 +17,8 @@ RtsaUpdater::RtsaUpdater(cl::Context context,
                          size_t frequencyCount,
                          size_t magnitudeResolution,
                          size_t historyBuffersCount,
-                         float magnitudeDbfsRange)
+                         float magnitudeDbfsRange,
+                         size_t bufferSize)
   : m_frequencyCount{ frequencyCount }
   , m_magnitudeResolution{ magnitudeResolution }
   , m_historyBuffersCount{ historyBuffersCount }
@@ -23,6 +26,8 @@ RtsaUpdater::RtsaUpdater(cl::Context context,
   , m_context{ context }
   , m_device{ OpenclUtils::getDevice(m_context) }
   , m_queue{ m_context }
+  , m_bufferSize{ bufferSize }
+  , m_hostMappedMemory{ NULL }
 {
     // allocate history buffer
     const auto historyBufferSize = sizeof(float) * m_frequencyCount * m_historyBuffersCount;
@@ -56,10 +61,22 @@ RtsaUpdater::RtsaUpdater(cl::Context context,
         throw utils::Exception(
           "Failed to build a kernel. Error code: {}\n Error log:\n{}", ex.err(), ss.str());
     }
+
+    // Allocate work buffer
+    m_workBuffer = cl::Buffer(m_context, CL_MEM_READ_WRITE, m_bufferSize);
+    m_hostPinnedMemory = (float*)m_queue.enqueueMapBuffer(m_workBuffer, false, 0, 0, m_bufferSize);
+}
+
+RtsaUpdater::~RtsaUpdater() {
+    m_queue.enqueueUnmapMemObject(m_workBuffer, m_hostPinnedMemory);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_openglBuffer);
+    glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void RtsaUpdater::update(cl::Buffer magnitudesBuffer,
-                         cl::BufferGL targetBuffer,
+                         uint32_t openglBuffer,
                          float referenceValue)
 {
     // calculate dBFS values
@@ -90,25 +107,27 @@ void RtsaUpdater::update(cl::Buffer magnitudesBuffer,
           magnitudesBuffer, m_historyBuffer, 0, dstOffset, magnitudeBufferSize);
     }
 
+    if (!m_hostMappedMemory) {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, openglBuffer);
+        m_hostMappedMemory = (float*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+        m_openglBuffer = openglBuffer;
+    }
+
     // update the density heatmap
     {
         auto updateDensityHeatmapKernel =
-          cl::KernelFunctor<cl::BufferGL, cl::Buffer, cl_uint, cl_uint, cl_uint, cl_uint, float>(
+          cl::KernelFunctor<cl::Buffer, cl::Buffer, cl_uint, cl_uint, cl_uint, cl_uint, float>(
             m_program, "updateDensityHeatmap");
-
+        
         const cl::NDRange globalGroupSize{ m_frequencyCount, m_magnitudeResolution };
-        /*const cl::NDRange localGroupSize{ std::min(m_frequencyCount, static_cast<size_t>(64)),
-                                          std::min(m_magnitudeResolution,
-                                                   static_cast<size_t>(64)) };*/
-        const cl::EnqueueArgs enqueueArgs(m_queue, globalGroupSize); //, localGroupSize);
-
-        const cl::vector<cl::Memory> memoryObjects{ cl::Memory(targetBuffer.get(), true) };
-        m_queue.enqueueAcquireGLObjects(&memoryObjects);
-
+        const cl::EnqueueArgs enqueueArgs(m_queue, globalGroupSize);
+        
         const auto magnitudeIndexToDbfsCoeff = m_magnitudeDbfsRange / m_magnitudeResolution;
-
+                
         updateDensityHeatmapKernel(enqueueArgs,
-                                   targetBuffer,
+                                   m_workBuffer,
                                    m_historyBuffer,
                                    static_cast<cl_uint>(m_frequencyCount),
                                    static_cast<cl_uint>(m_magnitudeResolution),
@@ -116,7 +135,10 @@ void RtsaUpdater::update(cl::Buffer magnitudesBuffer,
                                    static_cast<cl_uint>(currentHistoryBuffer),
                                    static_cast<float>(magnitudeIndexToDbfsCoeff));
 
-        m_queue.enqueueReleaseGLObjects(&memoryObjects);
+        m_queue.enqueueReadBuffer(m_workBuffer, false, 0, m_bufferSize, m_hostMappedMemory);
+        m_queue.finish();
+
+        //std::memcpy(m_hostMappedMemory, m_hostPinnedMemory, m_bufferSize);
     }
 }
 }

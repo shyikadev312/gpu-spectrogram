@@ -51,6 +51,9 @@ BENCHMARK(spectr::calc_cpu::benchmark::FftCooleyTukeyRadix2CpuBenchmark)
   ->Arg(15)
   ->Arg(16)
   ->Arg(17)
-  ->Arg(18);
+  ->Arg(19)
+  ->Arg(20)
+  ->Arg(21)
+  ->Arg(22);
 
 BENCHMARK_MAIN();

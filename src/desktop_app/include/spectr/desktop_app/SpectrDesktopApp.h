@@ -4,6 +4,7 @@
 #include <spectr/desktop_app/Input.h>
 #include <spectr/desktop_app/RtsaWindow.h>
 #include <spectr/desktop_app/WaterfallWindow.h>
+#include <spectr/desktop_app/SplitWindow.h>
 #include <spectr/render_gl/FpsGuard.h>
 #include <spectr/render_gl/GlfwUtils.h>
 #include <spectr/render_gl/RtsaContainer.h>
@@ -39,6 +40,7 @@ private:
     std::shared_ptr<Input> m_input;
     std::shared_ptr<WaterfallWindow> m_waterfallWindow;
     std::shared_ptr<RtsaWindow> m_rtsaWindow;
+    std::shared_ptr<SplitWindow> m_splitWindow;
     std::shared_ptr<Window> m_currentWindow = nullptr;
     std::shared_ptr<render_gl::TimeFrequencyHeatmapContainer> m_timeFrequencyHeatmapContainer;
     std::shared_ptr<render_gl::RtsaContainer> m_rtsaHeatmapContainer;

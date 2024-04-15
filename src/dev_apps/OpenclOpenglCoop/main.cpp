@@ -4,8 +4,6 @@
 #include <spectr/render_gl/GraphicsApi.h>
 #include <spectr/utils/Exception.h>
 
-#include <spdlog/spdlog.h>
-
 using namespace spectr;
 
 const float Eps = 1e-5f;
@@ -31,8 +29,6 @@ static void glfw_error_callback(int error, const char* desc)
 
 int main()
 {
-    spdlog::set_level(spdlog::level::debug);
-
     ASSERT(glfwInit());
 
     glfwSetErrorCallback(glfw_error_callback);
@@ -48,7 +44,8 @@ int main()
     glfwSetKeyCallback(window, key_callback);
 
     // initialization of OpenCL context from OpenGL context
-#if defined(OS_WINDOWS)
+    const std::vector<cl_context_properties> openclContextProperties;
+/*#ifdef _WIN32
     const std::vector<cl_context_properties> openclContextProperties{
         CL_GL_CONTEXT_KHR,
         reinterpret_cast<cl_context_properties>(glfwGetWGLContext(window)),
@@ -62,7 +59,7 @@ int main()
         CL_GLX_DISPLAY_KHR,
         reinterpret_cast<cl_context_properties>(glfwGetX11Display()),
     };
-#endif
+#endif*/
 
     calc_opencl::OpenclManager openclManager(openclContextProperties);
 
@@ -73,7 +70,7 @@ int main()
 
     const std::vector<float> realValues{ 1, 2, 3, 4 };
     calc_opencl::FftCooleyTukeyRadix2 fftOpenCl(openclManager.getContext(), realValues.size());
-    fftOpenCl.execute(realValues.data());
+    fftOpenCl.execute(realValues);
 
     // create OpenGL buffer
     GLuint ssbo = 0;
@@ -89,7 +86,9 @@ int main()
     glFinish();
 
     fftOpenCl.calculateMagnitudes();
+#if 0
     fftOpenCl.copyMagnitudesTo(openglOpenclBuffer, 0);
+#endif
 
     //
     std::vector<float> outputRealValues(realValues.size(), 0);

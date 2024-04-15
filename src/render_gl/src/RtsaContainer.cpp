@@ -15,8 +15,8 @@ RtsaContainer::RtsaContainer(RtsaContainerSettings settings)
 
     const auto bufferSize =
       settings.frequencyValuesCount * settings.magnitudeRangeValuesCount * sizeof(float) * 2;
-    glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, nullptr, GL_DYNAMIC_COPY);
-
+    glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, nullptr, GL_STREAM_DRAW);
+    
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 

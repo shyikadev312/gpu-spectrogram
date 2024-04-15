@@ -1,4 +1,5 @@
 #include <spectr/calc_opencl/FftCooleyTukeyRadix2CL.h>
+#include <complex>
 
 #include <spectr/calc_cpu/FftCooleyTukeyUtils.h>
 #include <spectr/calc_opencl/OpenclUtils.h>
@@ -6,6 +7,8 @@
 #include <spectr/utils/Exception.h>
 #include <spectr/utils/File.h>
 #include <spectr/utils/Timer.h>
+
+#include <spectr/render_gl/GraphicsApi.h>
 
 #include <algorithm>
 #include <cmath>
@@ -81,6 +84,13 @@ cl::Context FftCooleyTukeyRadix2::getContext() const
     return m_context;
 }
 
+void FftCooleyTukeyRadix2::execute(std::vector<float> realValues)
+{
+    float* values = new float[realValues.size()];
+    std::memcpy(values, realValues.data(), realValues.size() * sizeof(float));
+    execute(values);
+}
+
 void FftCooleyTukeyRadix2::execute(const float* realValues)
 {
     // if (realValues.size() != m_fftSize)
@@ -91,7 +101,7 @@ void FftCooleyTukeyRadix2::execute(const float* realValues)
     // }
 
     // copy the signal data to the first buffer
-    std::vector<Complex> complexValues(realValues, &realValues[m_fftSize]);
+    std::vector<std::complex<float>> complexValues(realValues, &realValues[m_fftSize]);
     complexValues[0] = { 1 };
     complexValues[1] = { 2 };
     delete[] realValues;
@@ -158,7 +168,7 @@ cl::Buffer FftCooleyTukeyRadix2::getFftBufferGpu()
 
 std::vector<std::complex<float>> FftCooleyTukeyRadix2::getFffBufferCpu()
 {
-    std::vector<Complex> values;
+    std::vector<std::complex<float>> values;
     values.resize(m_fftSize);
     cl::copy(m_queue, getFftBufferGpu(), values.begin(), values.end());
     return values;
@@ -180,7 +190,7 @@ void FftCooleyTukeyRadix2::calculateMagnitudes()
     }
 }
 
-void FftCooleyTukeyRadix2::copyMagnitudesTo(cl::BufferGL openglBuffer,
+void FftCooleyTukeyRadix2::copyMagnitudesTo(uint32_t openglBuffer,
                                             cl_uint elementOffset,
                                             float* maxMagnitude)
 {
@@ -208,23 +218,20 @@ void FftCooleyTukeyRadix2::copyMagnitudesTo(cl::BufferGL openglBuffer,
         *maxMagnitude = *std::max_element(values.begin(), values.end());
     }
 
-    // copy magnitudes to the OpenGL buffer
     {
-        const cl::vector<cl::Memory> memoryObjects{ cl::Memory(openglBuffer.get(), true) };
+        float* ptr = new float[valuesCount];
 
-        // utils::Timer testTimer;
-        m_queue.enqueueAcquireGLObjects(&memoryObjects);
-        // spdlog::trace("enqueueAcquireGLObjects() duration: {}", testTimer.toString());
+        m_queue.enqueueReadBuffer(m_magnitudesBuffer,
+                                  true,
+                                  0,//elementOffset * sizeof(float),
+                                  valuesCount * sizeof(float),
+                                  ptr);
 
-        m_queue.enqueueCopyBuffer(m_magnitudesBuffer,
-                                  openglBuffer,
-                                  0,
-                                  sizeof(float) * elementOffset,
-                                  sizeof(float) * valuesCount);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, openglBuffer);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, elementOffset * sizeof(float), valuesCount * sizeof(float), ptr);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-        cl::Event finishEvent;
-        m_queue.enqueueReleaseGLObjects(&memoryObjects, nullptr, &finishEvent);
-        finishEvent.wait();
+        delete[] ptr;
     }
 }
 

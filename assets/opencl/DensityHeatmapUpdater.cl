@@ -38,7 +38,7 @@ __kernel void updateDensityHeatmap(
         const size_t historyBufferElementIndex = historyBufferIndex * heatmapWidth + frequencyIndex;
         const float dbfsValue = dbfsHistoryBuffer[historyBufferElementIndex];
 
-        bool isPresent = currentCellCorrespondingDBFS < dbfsValue;
+        bool isPresent = (currentCellCorrespondingDBFS * 0.95f > dbfsValue) && ( currentCellCorrespondingDBFS * 1.05f < dbfsValue );
         if (isPresent)
         {
             cellValue += 1.0f;

@@ -68,8 +68,9 @@ OpenclManager::OpenclManager(const std::vector<cl_context_properties>& additiona
     std::vector<cl_context_properties> properties{
         CL_CONTEXT_PLATFORM,
         reinterpret_cast<cl_context_properties>(platformId),
+        0
     };
-    properties.insert(properties.end(), additionalProperties.begin(), additionalProperties.end());
+    // properties.insert(properties.end(), additionalProperties.begin(), additionalProperties.end());
     properties.push_back(0);
 
     m_context = cl::Context(m_device, properties.data(), notifyCallback);

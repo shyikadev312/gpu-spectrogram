@@ -14,9 +14,12 @@ public:
                 size_t frequencyCount,
                 size_t magnitudeResolution,
                 size_t historyBuffersCount,
-                float magnitudeDbfsRange);
+                float magnitudeDbfsRange,
+                size_t bufferSize);
 
-    void update(cl::Buffer magnitudesBuffer, cl::BufferGL targetBuffer, float referenceValue);
+    ~RtsaUpdater();
+
+    void update(cl::Buffer magnitudesBuffer, uint32_t openglBuffer, float referenceValue);
 
 private:
     const size_t m_frequencyCount;
@@ -29,5 +32,12 @@ private:
     cl::CommandQueue m_queue;
     cl::Buffer m_historyBuffer;
     size_t m_nextBufferIndex = 0;
+    size_t m_bufferSize;
+
+    // Used to speed up copy operations
+    cl::Buffer m_workBuffer;
+    float* m_hostPinnedMemory;
+    float* m_hostMappedMemory;
+    uint32_t m_openglBuffer;
 };
 }

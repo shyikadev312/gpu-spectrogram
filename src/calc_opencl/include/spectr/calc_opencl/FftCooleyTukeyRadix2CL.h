@@ -14,6 +14,7 @@ public:
 
     cl::Context getContext() const;
 
+    void execute(std::vector<float> realValues);
     /**
      * @brief Executes FFT on GPU, then returns.
      * @param realValues Array of real values of function f(x).
@@ -39,7 +40,7 @@ public:
      * @param openglBuffer Destination OpenGL buffer.
      * @param elementOffset Buffer offset in elements (element = real number).
      */
-    void copyMagnitudesTo(cl::BufferGL openglBuffer,
+    void copyMagnitudesTo(uint32_t openglBuffer,
                           cl_uint elementOffset,
                           float* maxMagnitude = nullptr);
 

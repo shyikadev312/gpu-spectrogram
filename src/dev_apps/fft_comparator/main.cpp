@@ -10,11 +10,9 @@
 #include <spectr/calc_opencl/OpenclUtils.h>
 #include <spectr/utils/Exception.h>
 
-#include <spdlog/spdlog.h>
-
 #include <glad/glad.h>
 
-#if defined(OS_WINDOWS)
+#ifdef _WIN32
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #define GLFW_EXPOSE_NATIVE_WIN32
@@ -22,12 +20,15 @@
 #elif defined(OS_LINUX)
 #define GLFW_EXPOSE_NATIVE_X11
 #define GLFW_EXPOSE_NATIVE_GLX
-#elif
+#else
 #error "Unsupported OpenGL platform."
 #endif
 
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
+
+#include <algorithm>
+#include <iomanip>
 
 using namespace spectr;
 
@@ -65,8 +66,6 @@ std::vector<Tto> convertVector(const std::vector<Tfrom>& src)
 
 int main()
 {
-    spdlog::set_level(spdlog::level::debug);
-
     ASSERT(glfwInit());
 
     glfwSetErrorCallback(glfw_error_callback);
@@ -82,7 +81,7 @@ int main()
     glfwSetKeyCallback(window, key_callback);
 
     // initialization of OpenCL context from OpenGL context
-#if defined(OS_WINDOWS)
+#ifdef _WIN32
     const std::vector<cl_context_properties> openclContextProperties{
         CL_GL_CONTEXT_KHR,
         reinterpret_cast<cl_context_properties>(glfwGetWGLContext(window)),
@@ -113,7 +112,7 @@ int main()
 
     // const std::vector<float> realValues{ 1, 2, 3, 4, 5, 6, 7, 8 };
     calc_opencl::FftCooleyTukeyRadix2 fftOpenCl(openclManager.getContext(), realValues.size());
-    fftOpenCl.execute(realValues.data());
+    fftOpenCl.execute(realValues);
 
     const auto fftCpu = calc_cpu::FftCooleyTukeyRadix2::getFFT(realValues);
     const auto fftGpu = fftOpenCl.getFffBufferCpu();

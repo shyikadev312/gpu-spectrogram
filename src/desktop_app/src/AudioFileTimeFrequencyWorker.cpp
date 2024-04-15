@@ -2,7 +2,9 @@
 
 #include <spectr/calc_cpu/FftCooleyTukeyRadix2.h>
 #include <spectr/utils/Timer.h>
+#include <spectr/utils/Assert.h>
 
+#include <iostream>
 #include <iomanip>
 #include <sstream>
 
@@ -20,10 +22,10 @@ std::pair<float, float> minMax(const std::vector<float>& values)
 
 AudioFileTimeFrequencyWorker::AudioFileTimeFrequencyWorker(
   AudioFileTimeFrequencyWorkerSettings settings)
-  : m_settings{ std::move(settings) }
-  , m_rtsaGlBuffer{ m_settings.fftCalculator->getContext(),
-                    CL_MEM_READ_WRITE,
-                    m_settings.rtsaHeatmapContainer->getBuffer() }
+  : m_settings { std::move(settings) }, m_rtsaGlBuffer(m_settings.rtsaHeatmapContainer->getBuffer()), bufferSize(settings.rtsaBufferSize)
+  // , m_rtsaGlBuffer{ m_settings.fftCalculator->getContext(),
+  //                   CL_MEM_READ_WRITE,
+  //                   m_settings.rtsaHeatmapContainer->getBuffer() }
 {
 }
 
@@ -64,7 +66,7 @@ void AudioFileTimeFrequencyWorker::update()
         // stage: calculate FFT
         timer.restart();
 
-        m_settings.fftCalculator->execute(calculationInputData.values);
+        //m_settings.fftCalculator->execute(calculationInputData.values);
 
         // spdlog::trace("FFT calculation, size: {}, time: {}",
         //               calculationInputData.values.size(),
@@ -98,16 +100,15 @@ void AudioFileTimeFrequencyWorker::update()
         // stage: calculate and copy magnitudes to output buffer
         timer.restart();
 
-        auto heatmapBuffer =
+        auto& heatmapBuffer =
           m_settings.heatmapContainer->getOrAllocateBuffer(calculationInputData.columnIndex);
 
         auto bufferIt = m_glBuffers.find(heatmapBuffer.startColumn);
 
-        cl::BufferGL openglOpenclBuffer;
+        GLuint openglOpenclBuffer;
         if (bufferIt == m_glBuffers.end())
         {
-            openglOpenclBuffer = cl::BufferGL(
-              m_settings.fftCalculator->getContext(), CL_MEM_READ_WRITE, heatmapBuffer.ssbo);
+            openglOpenclBuffer = heatmapBuffer.ssbo;
             m_glBuffers.insert({ heatmapBuffer.startColumn, openglOpenclBuffer });
         }
         else
@@ -124,13 +125,13 @@ void AudioFileTimeFrequencyWorker::update()
 
         // stage: calculate magnitudes
         timer.restart();
-        m_settings.fftCalculator->calculateMagnitudes();
+        // m_settings.fftCalculator->calculateMagnitudes();
         // spdlog::trace("Magnitudes calculated: {}", timer.toString());
         std::cout << "Magnitudes calculated: " << timer.toString() << std::endl;
 
         // stage: copy magnitudes values to final OpenGL buffer
-        m_settings.fftCalculator->copyMagnitudesTo(
-          openglOpenclBuffer, static_cast<cl_uint>(elementOffsetInBuffer), &maxMagnitudeLocal);
+        // m_settings.fftCalculator->copyMagnitudesTo(
+        //  openglOpenclBuffer, static_cast<cl_uint>(elementOffsetInBuffer), &maxMagnitudeLocal);
         // spdlog::trace("Magnitudes copied: {}", timer.toString());
         std::cout << "Magnitudes copied: " << timer.toString() << std::endl;
 
@@ -141,8 +142,8 @@ void AudioFileTimeFrequencyWorker::update()
         // stage: apply the calculated values to the RTSA heatmap buffer:
         timer.restart();
         const auto referenceValue = std::pow(2.0f, 31.0f);
-        m_settings.rtsaUpdater->update(
-          m_settings.fftCalculator->getMagnitudesBuffer(), m_rtsaGlBuffer, referenceValue);
+        // m_settings.rtsaUpdater->update(
+        //   m_settings.fftCalculator->getMagnitudesBuffer(), m_rtsaGlBuffer, referenceValue);
         // spdlog::trace("RTSA updated: {}", timer.toString());
         std::cout << "RTSA updated: " << timer.toString() << std::endl;
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <spectr/calc_opencl/FftCooleyTukeyRadix2CL.h>
-#include <spectr/calc_opencl/RtsaUpdater.h>
+// #include <spectr/calc_opencl/FftCooleyTukeyRadix2CL.h>
+// #include <spectr/calc_opencl/RtsaUpdater.h>
 #include <spectr/render_gl/RtsaContainer.h>
 #include <spectr/render_gl/TimeFrequencyHeatmapContainer.h>
 
@@ -23,8 +23,9 @@ struct AudioFileTimeFrequencyWorkerSettings
     size_t fftCalculationsInSecond;
     std::shared_ptr<render_gl::TimeFrequencyHeatmapContainer> heatmapContainer;
     std::shared_ptr<render_gl::RtsaContainer> rtsaHeatmapContainer;
-    std::unique_ptr<calc_opencl::FftCooleyTukeyRadix2> fftCalculator;
-    std::unique_ptr<calc_opencl::RtsaUpdater> rtsaUpdater;
+    // std::unique_ptr<calc_opencl::FftCooleyTukeyRadix2> fftCalculator;
+    // std::unique_ptr<calc_opencl::RtsaUpdater> rtsaUpdater;
+    size_t rtsaBufferSize;
 };
 
 struct PendingData
@@ -47,12 +48,14 @@ public:
 private:
     void workLoop(std::stop_token stoken);
 
+    size_t bufferSize; // temporary quick and dirty fix
+
 private:
     AudioFileTimeFrequencyWorkerSettings m_settings;
     std::unique_ptr<std::jthread> m_workerThread;
     std::queue<PendingData> m_pendingDatas;
     std::mutex m_mutex;
-    std::unordered_map<size_t, cl::BufferGL> m_glBuffers;
-    cl::BufferGL m_rtsaGlBuffer;
+    std::unordered_map<size_t, GLuint> m_glBuffers;
+    GLuint m_rtsaGlBuffer;
 };
 }

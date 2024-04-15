@@ -30,7 +30,10 @@ void FftCooleyTukeyRadix2OpenclBenchmark(::benchmark::State& state)
 
     for (auto _ : state)
     {
-        fftCalculator.execute(values.data());
+        float* duplicatedValues = new float[fftSize];
+        std::copy(values.begin(), values.end(), duplicatedValues);
+
+        fftCalculator.execute(duplicatedValues);
     }
 }
 }

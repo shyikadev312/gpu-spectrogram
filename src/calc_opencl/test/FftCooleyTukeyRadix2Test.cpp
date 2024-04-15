@@ -33,8 +33,11 @@ public:
 
         // OpenclUtils::printContextInfo(context, std::cout);
 
+        float* duplicatedArray = new float[inputRealValues.size()];
+        std::copy(inputRealValues.begin(), inputRealValues.end(), duplicatedArray);
+
         FftCooleyTukeyRadix2 fftOpenCl(context, inputRealValues.size());
-        fftOpenCl.execute(inputRealValues.data());
+        fftOpenCl.execute(duplicatedArray);
         const auto v = fftOpenCl.getFffBufferCpu();
         return v;
     }

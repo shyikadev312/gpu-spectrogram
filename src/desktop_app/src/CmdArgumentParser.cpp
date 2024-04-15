@@ -52,11 +52,11 @@ DesktopAppSettings CmdArgumentParser::parse(int argc, const char* argv[])
 
     std::string path;
     
-    parser << stdarg::option<void()>({ help_options[0],    help_options[1]       }, "show help message", [parser]() { stdarg::arg_parser::help(parser); })
-           << stdarg::option<void()>({ version_options[0], version_options[1]    }, "show tool version", [&]() { settings.command = Command::PrintVersion; })
-           << stdarg::argument({ input_path_options[0],    input_path_options[1] }, "path of input signal WAV audio file", "path", path)
-           << stdarg::argument({ fft_power_options[0],     fft_power_options[1]  }, "power P of 2 of the FFT size - 2^P.", "P", fftSizePowerOfTwo)
-           << stdarg::argument({ cps_options[0],           cps_options[1]        }, "FFT calculations per second", "cps", settings.fftCalculationPerSecond);
+    parser << stdarg::option<void()>({        help_options[0],       help_options[1]       }, "show help message", [parser]() { stdarg::arg_parser::help(parser); })
+           << stdarg::option<void()>({        version_options[0],    version_options[1]    }, "show tool version", [&]() { settings.command = Command::PrintVersion; })
+           << stdarg::argument<std::string>({ input_path_options[0], input_path_options[1] }, "path of input signal WAV audio file", "path", path)
+           << stdarg::argument<size_t>({      fft_power_options[0],  fft_power_options[1]  }, "power P of 2 of the FFT size - 2^P.", "P", fftSizePowerOfTwo)
+           << stdarg::argument<size_t>({      cps_options[0],        cps_options[1]        }, "FFT calculations per second", "cps", settings.fftCalculationPerSecond);
 
     parser();
 

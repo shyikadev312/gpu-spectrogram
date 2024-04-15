@@ -16,7 +16,7 @@ public:
         const auto real = std::cos(2.0 * utils::Math::PI / std::pow(2.0, stageIndex + 1));
         const auto imag = -std::sin(2.0 * utils::Math::PI / std::pow(2.0, stageIndex + 1));
         return { static_cast<T>(real), static_cast<T>(imag) };
-    };
+    }
 
     /**
      * @brief Create FFT coefficients for stage N.
