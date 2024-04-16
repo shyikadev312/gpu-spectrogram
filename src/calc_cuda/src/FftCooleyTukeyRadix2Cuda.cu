@@ -7,36 +7,48 @@
 #include <device_launch_parameters.h>
 #include <complex>
 
-unsigned int bitReverse(unsigned int v)
-{
-    v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1);
-    v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2);
-    v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4);
-    v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8);
-    v = (v >> 16) | (v << 16);
-
-    v = v >> BIT_REVERSE_SHIFT_VALUE;
-
-    return v;
-}
-
-float2 complexMultiply(float2 a, float2 b) {
-    return (float2)(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
-}
-
 __global__ void bit_reverse_permutation(
     const float2* input,
-    float2* output
+          float2* output
 ) {
     unsigned int globalId = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned int i1 = globalId;
-    unsigned int i2 = bitReverse(globalId);
+    unsigned int i2 = globalId;
+
+    i2 = ((i2 >> 1) & 0x55555555) | ((i2 & 0x55555555) << 1);
+    i2 = ((i2 >> 2) & 0x33333333) | ((i2 & 0x33333333) << 2);
+    i2 = ((i2 >> 4) & 0x0F0F0F0F) | ((i2 & 0x0F0F0F0F) << 4);
+    i2 = ((i2 >> 8) & 0x00FF00FF) | ((i2 & 0x00FF00FF) << 8);
+    i2 = (i2 >> 16) | (i2 << 16);
+
+    i2 = i2 >> BIT_REVERSE_SHIFT_VALUE;
+
     output[i2] = input[i1];
+}
+
+void bit_reverse_permutation_wrapper(const float* input,
+                                           float* output,
+                                           size_t  size) {
+    float2* in, *out;
+
+    cudaMalloc((void**)&in,  sizeof(float2) * size);
+    cudaMalloc((void**)&out, sizeof(float2) * size);
+
+    cudaMemcpy(in, input, sizeof(float2) * size, cudaMemcpyHostToDevice);
+
+    bit_reverse_permutation<<<1, size>>>(in, out);
+
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(output, out, sizeof(float2) * size, cudaMemcpyDeviceToHost);
+
+    cudaFree(in);
+    cudaFree(out);
 }
 
 __global__ void fft_stage(
     const float2* input,
-    float2* output,
+          float2* output,
     const float2* omegaValues,
     unsigned int subFftSize,
     unsigned int subFftCount,
@@ -53,7 +65,11 @@ __global__ void fft_stage(
     const float2 input2 = input[index2];
 
     const float2 omegaK = omegaValues[subFftElementIndex];
-    const float2 mul = complexMultiply(omegaK, input2);
+    float2 mul;
+
+    mul.x = omegaK.x * input2.x - omegaK.y * input2.y;
+    mul.y = omegaK.x * input2.y + omegaK.y * input2.x;
+
     float2 y1 = input1;
     float2 y2 = input1;
 
@@ -74,9 +90,31 @@ __global__ void calculate_magnitudes(
     magnitudes[i] = 2 * sqrt((float)(pow(fft[i].x, 2) + pow(fft[i].y, 2)));
 }
 
+void calculate_magnitudes_wrapper(const float* fft,
+                                        float* magnitudes,
+                                        size_t size) {
+    float2* in;
+    float* out;
+
+    cudaMalloc((void**)&in,  sizeof(float2) * size);
+    cudaMalloc((void**)&out, sizeof(float ) * size);
+
+    cudaMemcpy(in, fft, sizeof(float2) * size, cudaMemcpyHostToDevice);
+
+    calculate_magnitudes<<<1, size>>>(in, out);
+
+    cudaMemcpy(magnitudes, out, sizeof(float) * size, cudaMemcpyDeviceToHost);
+
+    cudaFree(in);
+    cudaFree(out);
+
+    cudaDeviceSynchronize();
+}
+
+
 __global__ void find_max(
     const float* values,
-    __shared__ float* temp,
+    float* temp,
     float* output
 ) {
     const size_t globalId = blockIdx.x * blockDim.x + threadIdx.x;
@@ -84,6 +122,7 @@ __global__ void find_max(
     const size_t localSize = blockDim.x;
 
     temp[localId] = values[globalId];
+    // barrier(CLK_LOCAL_MEM_FENCE);
 
     for (int i = localSize >> 1; i > 0; i >>= 1)
     {
@@ -93,6 +132,8 @@ __global__ void find_max(
             {
                 temp[localId] = temp[localId + i];
             }
+
+            // barrier(CLK_LOCAL_MEM_FENCE);
         }
     }
 
@@ -100,4 +141,54 @@ __global__ void find_max(
     {
         output[blockIdx.x] = temp[0];
     }
+}
+
+void find_max_wrapper(const float* values,
+                            float* output,
+                            size_t size) {
+    float* in, *tmp, *out;
+
+    cudaMalloc((void**)&in,  sizeof(float) * size);
+    cudaMalloc((void**)&tmp, sizeof(float) * size);
+    cudaMalloc((void**)&out, sizeof(float) * size);
+
+    cudaMemcpy(in, values, sizeof(float) * size, cudaMemcpyHostToDevice);
+
+    find_max<<<1, size>>>(in, tmp, out);
+
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(output, out, sizeof(float) * size, cudaMemcpyDeviceToHost);
+
+    cudaFree(in);
+    cudaFree(tmp);
+    cudaFree(out);
+}
+
+void fft_stage_wrapper(const float* input,
+                             float* output,
+                       const float* omegaValues,
+                       unsigned int subFftSize,
+                       unsigned int subFftCount,
+                       unsigned int stageIndex,
+                       size_t input_size,
+                       size_t omega_size) {
+    float2* in, *out, *omega;
+
+    cudaMalloc((void**)&in,    sizeof(float2) * input_size);
+    cudaMalloc((void**)&out,   sizeof(float2) * input_size);
+    cudaMalloc((void**)&omega, sizeof(float2) * omega_size);
+
+    cudaMemcpy(in,    input,       sizeof(float2) * input_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(omega, omegaValues, sizeof(float2) * omega_size, cudaMemcpyHostToDevice);
+
+    fft_stage<<<1, input_size>>>(in, out, omega, subFftSize, subFftCount, stageIndex);
+
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(output, out, sizeof(float2) * input_size, cudaMemcpyDeviceToHost);
+
+    cudaFree(in);
+    cudaFree(out);
+    cudaFree(omega);
 }

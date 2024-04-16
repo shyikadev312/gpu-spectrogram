@@ -15,11 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\calc_cuda\src\FftCooleyTukeyRadix2Cuda.cu">
+    <CudaCompile Include="..\src\calc_cuda\src\FftCooleyTukeyRadix2Cuda.cu">
       <Filter>Source Files</Filter>
-    </None>
-    <None Include="..\src\calc_cuda\src\DensityHeatmapUpdater.cu">
+    </CudaCompile>
+    <CudaCompile Include="..\src\calc_cuda\src\DensityHeatmapUpdater.cu">
       <Filter>Source Files</Filter>
-    </None>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\calc_cuda\include\spectr\calc_cuda\FftCooleyTukeyRadix2Cuda.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

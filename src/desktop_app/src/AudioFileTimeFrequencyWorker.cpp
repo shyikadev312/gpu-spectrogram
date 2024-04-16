@@ -1,6 +1,9 @@
 #include <spectr/desktop_app/AudioFileTimeFrequencyWorker.h>
 
 #include <spectr/calc_cpu/FftCooleyTukeyRadix2.h>
+#include <spectr/calc_cpu/FftCooleyTukeyUtils.h>
+#include <spectr/calc_cuda/FftCooleyTukeyRadix2Cuda.h>
+#include <spectr/utils/Math.h>
 #include <spectr/utils/Timer.h>
 #include <spectr/utils/Assert.h>
 
@@ -67,6 +70,49 @@ void AudioFileTimeFrequencyWorker::update()
         timer.restart();
 
         //m_settings.fftCalculator->execute(calculationInputData.values);
+        size_t stageCount = utils::Math::getPowerOfTwo(m_settings.fftSize);
+
+        float* buffer0    = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * 2];
+        float* buffer1    = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * 2];
+        float* magnitudes = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond];
+        std::vector<std::complex<float>>* omegas = new std::vector<std::complex<float>>[stageCount];
+
+        for (size_t stageIndex = 0; stageIndex < stageCount; ++stageIndex)
+        {
+            const auto subFftHalfSize = 1 << stageIndex;
+            omegas[stageIndex] = calc_cpu::FftCooleyTukeyUtils::getOmegas<float>(stageIndex);
+        }
+
+        std::memcpy(buffer0, calculationInputData.values, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * sizeof(float));
+
+        bit_reverse_permutation_wrapper(buffer0, buffer1, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond);
+
+        std::swap(buffer0, buffer1);
+
+        const auto complexNumberSize = 2 * sizeof(float);
+
+        for (size_t stageIndex = 0; stageIndex < stageCount; ++stageIndex)
+        {
+            const auto& srcBuffer = buffer0;
+            const auto& dstBuffer = buffer1;
+
+            const auto subFftSize = 1ull << (stageIndex + 1ull);
+            const auto subFftHalfSize = subFftSize / 2;
+            const auto subFftCount = m_settings.fftSize / subFftSize;
+
+            const auto omegaBuffer = omegas[stageIndex];
+
+            fft_stage_wrapper(srcBuffer,
+                              dstBuffer,
+                              reinterpret_cast<const float*>(omegaBuffer.data()),
+                              static_cast<unsigned int>(subFftSize),
+                              static_cast<unsigned int>(subFftCount),
+                              static_cast<unsigned int>(stageIndex),
+                              m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond,
+                              omegaBuffer.size());
+
+            std::swap(buffer0, buffer1);
+        }
 
         // spdlog::trace("FFT calculation, size: {}, time: {}",
         //               calculationInputData.values.size(),
@@ -127,12 +173,20 @@ void AudioFileTimeFrequencyWorker::update()
         timer.restart();
         // m_settings.fftCalculator->calculateMagnitudes();
         // spdlog::trace("Magnitudes calculated: {}", timer.toString());
+
+        calculate_magnitudes_wrapper(buffer0, magnitudes, m_settings.fftSize / 2);
+
         std::cout << "Magnitudes calculated: " << timer.toString() << std::endl;
 
         // stage: copy magnitudes values to final OpenGL buffer
         // m_settings.fftCalculator->copyMagnitudesTo(
         //  openglOpenclBuffer, static_cast<cl_uint>(elementOffsetInBuffer), &maxMagnitudeLocal);
         // spdlog::trace("Magnitudes copied: {}", timer.toString());
+
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, openglOpenclBuffer);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, elementOffsetInBuffer * sizeof(float), m_settings.fftSize / 2 * sizeof(float), magnitudes);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
         std::cout << "Magnitudes copied: " << timer.toString() << std::endl;
 
         // TODO add mutex?
@@ -145,10 +199,16 @@ void AudioFileTimeFrequencyWorker::update()
         // m_settings.rtsaUpdater->update(
         //   m_settings.fftCalculator->getMagnitudesBuffer(), m_rtsaGlBuffer, referenceValue);
         // spdlog::trace("RTSA updated: {}", timer.toString());
+
         std::cout << "RTSA updated: " << timer.toString() << std::endl;
 
         // spdlog::trace("Whole spectrogram stage: {}", globalFftTimer.toString());
         std::cout << "Whole spectrogram stage: " << globalFftTimer.toString() << std::endl;
+
+        delete[] buffer0;
+        delete[] buffer1;
+        delete[] omegas;
+        delete[] magnitudes;
     }
 }
 

@@ -3,7 +3,7 @@
 #include <spectr/audio_loader/AudioLoader.h>
 #include <spectr/audio_loader/SignalDataGenerator.h>
 // #include <spectr/calc_opencl/FftCooleyTukeyRadix2CL.h>
-// #include <spectr/calc_opencl/OpenclApi.h>
+#include <spectr/calc_opencl/OpenclApi.h>
 // #include <spectr/calc_opencl/OpenclManager.h>
 // #include <spectr/calc_opencl/RtsaUpdater.h>
 #include <spectr/desktop_app/AudioFileTimeFrequencyWorker.h>
@@ -98,11 +98,11 @@ int SpectrDesktopApp::main(int argc, const char* argv[])
         SpectrDesktopApp app;
         return app.mainImpl(argc, argv);
     }
-    // catch (const cl::Error& err)
-    // {
-    //     std::cerr << "Uncaught OpenCL exception: " << err.what() << "(" << err.err() << ")" << std::endl;
-    //     return EXIT_FAILURE;
-    // }
+    catch (const cl::Error& err)
+    {
+        std::cerr << "Uncaught OpenCL exception: " << err.what() << "(" << err.err() << ")" << std::endl;
+        return EXIT_FAILURE;
+    }
     catch (const std::exception& ex)
     {
         // spdlog::critical("Uncaught exception: {}", ex.what());
@@ -377,7 +377,8 @@ void SpectrDesktopApp::initFftCalculator(const DesktopAppSettings& settings)
             .rtsaHeatmapContainer = m_rtsaHeatmapContainer,
             // .fftCalculator = std::move(fftCalculator),
             // .rtsaUpdater = std::move(rtsaUpdater),
-            .rtsaBufferSize = rtsaContainerSettings.frequencyValuesCount * rtsaContainerSettings.magnitudeRangeValuesCount * sizeof(float) * 2
+            .rtsaBufferSize = rtsaContainerSettings.frequencyValuesCount * rtsaContainerSettings.magnitudeRangeValuesCount * sizeof(float) * 2,
+            .fftSize = settings.fftSize
         };
 
         auto audioFileWorker =

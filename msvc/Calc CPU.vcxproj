@@ -24,6 +24,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\calc_cpu\include\spectr\calc_cpu\FftCooleyTukeyRadix2.h" />
     <ClInclude Include="..\src\calc_cpu\include\spectr\calc_cpu\FftCooleyTukeyUtils.h" />
+    <ClInclude Include="..\src\calc_cpu\include\spectr\calc_cpu\FFTInterface.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

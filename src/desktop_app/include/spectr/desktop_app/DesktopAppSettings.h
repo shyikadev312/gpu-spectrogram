@@ -12,6 +12,16 @@ enum class Command
     Execute,
 };
 
+enum class BackendEngine {
+    CPU,
+    OpenCL,
+    CUDA
+};
+
+enum class FrontendEngine {
+    OpenGL
+};
+
 struct DesktopAppSettings
 {
     Command command;
@@ -19,5 +29,7 @@ struct DesktopAppSettings
     std::filesystem::path audioFilePath;
     size_t fftSize = 0;
     size_t fftCalculationPerSecond = 0;
+    BackendEngine backend = BackendEngine::CUDA;
+    FrontendEngine frontend = FrontendEngine::OpenGL;
 };
 }

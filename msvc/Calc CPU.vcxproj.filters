@@ -26,5 +26,8 @@
     <ClInclude Include="..\src\calc_cpu\include\spectr\calc_cpu\FftCooleyTukeyUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\calc_cpu\include\spectr\calc_cpu\FFTInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

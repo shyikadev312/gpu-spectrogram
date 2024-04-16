@@ -2,7 +2,7 @@
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <complex>
-__global__ void convertToDBFS(
+__global__ void convert_to_dbfs(
     float* magnitudes,
     float referenceValue
 ) {
@@ -16,7 +16,25 @@ __global__ void convertToDBFS(
     magnitudes[globalId] = dbfs;
 }
 
-__global__ void updateDensityHeatmap(
+void convert_to_dbfs_wrapper(float* magnitudes,
+                           float referenceValue,
+                           size_t size) {
+    float* mag;
+
+    cudaMalloc((void**)&mag, sizeof(float) * size);
+
+    cudaMemcpy(mag, magnitudes, sizeof(float) * size, cudaMemcpyHostToDevice);
+
+    convert_to_dbfs<<<1, size>>>(mag, referenceValue);
+
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(magnitudes, mag, sizeof(float) * size, cudaMemcpyDeviceToHost);
+
+    cudaFree(mag);
+}
+
+__global__ void update_density_heatmap(
     float2* heatmap,
     float* dbfsHistoryBuffer,
     unsigned int heatmapWidth,
@@ -62,4 +80,32 @@ __global__ void updateDensityHeatmap(
     unsigned int heatmapCellIndex = frequencyIndex * heatmapHeight + magnitudeCellIndex;
     heatmap[heatmapCellIndex].x = dbfsIntensity / (float)historyBufferCount;
     heatmap[heatmapCellIndex].y = (dbfsAge / (float)historyBufferCount) / (float)historyBufferCount;
+}
+
+void update_density_heatmap_wrapper(float* heatmap,
+                                  float* dbfsHistoryBuffer,
+                                  unsigned int heatmapWidth,
+                                  unsigned int heatmapHeight,
+                                  unsigned int historyBufferCount,
+                                  unsigned int mostRecentBufferIndex,
+                                  float magnitudeIndexToDbfsCoeff,
+                                  size_t size,
+                                  size_t historyBufferSize) {
+    float2* heat;
+    float* history;
+
+    cudaMalloc((void**)&heat, sizeof(float2) * size);
+    cudaMalloc((void**)&history, sizeof(float) * historyBufferSize);
+
+    cudaMemcpy(heat, heatmap, sizeof(float2) * size, cudaMemcpyHostToDevice);
+    cudaMemcpy(history, dbfsHistoryBuffer, sizeof(float) * historyBufferSize, cudaMemcpyHostToDevice);
+
+    update_density_heatmap <<<1, size >>>(heat, history, heatmapWidth, heatmapHeight, historyBufferCount, mostRecentBufferIndex, magnitudeIndexToDbfsCoeff);
+
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(dbfsHistoryBuffer, history, sizeof(float) * historyBufferSize, cudaMemcpyDeviceToHost);
+
+    cudaFree(heat);
+    cudaFree(history);
 }

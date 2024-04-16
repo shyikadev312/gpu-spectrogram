@@ -15,6 +15,8 @@ constexpr const char* version_options[]    = { "--version",        "-v" };
 constexpr const char* input_path_options[] = { "--input",          "-i" };
 constexpr const char* fft_power_options[]  = { "--fft-size-power", "-p" };
 constexpr const char* cps_options[]        = { "--cps",            "-c" };
+constexpr const char* backend_options[]    = { "--backend",        "-b" };
+constexpr const char* frontend_options[]   = { "--frontend",       "-f" };
 
 namespace spectr::desktop_app
 {
@@ -56,7 +58,9 @@ DesktopAppSettings CmdArgumentParser::parse(int argc, const char* argv[])
            << stdarg::option<void()>({        version_options[0],    version_options[1]    }, "show tool version", [&]() { settings.command = Command::PrintVersion; })
            << stdarg::argument<std::string>({ input_path_options[0], input_path_options[1] }, "path of input signal WAV audio file", "path", path)
            << stdarg::argument<size_t>({      fft_power_options[0],  fft_power_options[1]  }, "power P of 2 of the FFT size - 2^P.", "P", fftSizePowerOfTwo)
-           << stdarg::argument<size_t>({      cps_options[0],        cps_options[1]        }, "FFT calculations per second", "cps", settings.fftCalculationPerSecond);
+           << stdarg::argument<size_t>({      cps_options[0],        cps_options[1]        }, "FFT calculations per second", "cps", settings.fftCalculationPerSecond)
+           /*<< stdarg::argument<std::string>({ backend_options[0],    backend_options[1]    }, "chooses a backend to use (cpu/cuda/opencl)", "backend", settings.backend)*/
+           /*<< stdarg::argument<std::string>({ frontend_options[0],   frontend_options[1]   }, "chooses a frontend to use (opengl)", "frontend", settings.frontend)*/;
 
     parser();
 

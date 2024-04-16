@@ -95,7 +95,6 @@ void RtsaRenderer::render(const render_gl::RenderContext& renderContext)
 
     const auto frequencyOffset = 0;
 
-    // const glm::mat3 localToBufferMatrix{
     const glm::mat3 localToBufferMatrix{
         glm::vec3{ settings.frequencyValuesCount, 0, 0 },
         glm::vec3{ 0, height, 0 },

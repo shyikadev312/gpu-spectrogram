@@ -26,6 +26,7 @@ struct AudioFileTimeFrequencyWorkerSettings
     // std::unique_ptr<calc_opencl::FftCooleyTukeyRadix2> fftCalculator;
     // std::unique_ptr<calc_opencl::RtsaUpdater> rtsaUpdater;
     size_t rtsaBufferSize;
+    size_t fftSize;
 };
 
 struct PendingData
