@@ -62,9 +62,11 @@ public:
      */
     float getDuration() const;
 
+    SignalData& operator+=(SignalData data);
+
 private:
-    const std::vector<SampleDataVariant> m_channelsDatas;
-    const size_t m_sampleRate = 0;
-    const size_t m_sampleCount = 0;
+    std::vector<SampleDataVariant> m_channelsDatas;
+    size_t m_sampleRate = 0;
+    size_t m_sampleCount = 0;
 };
 }

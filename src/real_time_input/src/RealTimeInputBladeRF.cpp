@@ -1,7 +1,11 @@
 #include <spectr/real_time_input/RealTimeInputBladeRF.h>
 
+#include <iostream>
+
 namespace spectr::real_time_input {
     RealTimeInputBladeRF::RealTimeInputBladeRF() : device(nullptr) {
+        std::cout << "Initializing bladeRF...\n";
+
         bladerf_devinfo device_info { };
 
         bladerf_init_devinfo(&device_info);
@@ -13,15 +17,15 @@ namespace spectr::real_time_input {
         }
 
 
-        if ((status = bladerf_set_frequency(device, BLADERF_CHANNEL_RX(0), 910000000)) != 0) {
+        if ((status = bladerf_set_frequency(device, BLADERF_CHANNEL_RX(0), frequency)) != 0) {
             throw std::runtime_error(std::format("Unable to set bladeRF frequency: {}.", bladerf_strerror(status)));
         }
 
-        if ((status = bladerf_set_sample_rate(device, BLADERF_CHANNEL_RX(0), 300000, nullptr)) != 0) {
+        if ((status = bladerf_set_sample_rate(device, BLADERF_CHANNEL_RX(0), sample_rate, nullptr)) != 0) {
             throw std::runtime_error(std::format("Unable to set bladeRF sample rate: {}.", bladerf_strerror(status)));
         }
 
-        if ((status = bladerf_set_bandwidth(device, BLADERF_CHANNEL_RX(0), 2000000, nullptr)) != 0) {
+        if ((status = bladerf_set_bandwidth(device, BLADERF_CHANNEL_RX(0), sample_rate * sizeof(float), nullptr)) != 0) {
             throw std::runtime_error(std::format("Unable to set bladeRF bandwidth: {}.", bladerf_strerror(status)));
         }
 
@@ -39,10 +43,15 @@ namespace spectr::real_time_input {
             throw std::runtime_error(std::format("Unable to configure bladeRF RX interface: {}.", bladerf_strerror(status)));
         }
 
+        std::cout << "BladeRF initialized successfully\n"
+                     "Starting RX thread\n";
+
         thread = std::make_unique<std::thread>(RealTimeInputBladeRF::sync_thread,
                                                device,
                                                shutdown.get_future(),
-                                               data);
+                                               &data);
+
+        std::cout << "BladeRF RX thread initialized.\n";
     }
 
     RealTimeInputBladeRF::~RealTimeInputBladeRF() {
@@ -52,5 +61,13 @@ namespace spectr::real_time_input {
         if (device != nullptr) {
             bladerf_close(device);
         }
+    }
+
+    audio_loader::SignalData RealTimeInputBladeRF::getSignalData() noexcept(true) {
+        return getData().toSignalData(downsampled_rate);
+    }
+
+    int RealTimeInputBladeRF::getSampleRate() const noexcept(true) {
+        return downsampled_rate;
     }
 }

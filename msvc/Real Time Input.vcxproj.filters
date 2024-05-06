@@ -27,6 +27,9 @@
     <ClCompile Include="..\src\real_time_input\src\RealTimeInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\real_time_input\src\FileInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\real_time_input\include\spectr\real_time_input\RealTimeInput.h">
@@ -39,6 +42,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\real_time_input\include\spectr\real_time_input\RealTimeInputPortAudio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\real_time_input\include\spectr\real_time_input\FileInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

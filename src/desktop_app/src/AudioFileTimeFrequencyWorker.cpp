@@ -71,52 +71,52 @@ void AudioFileTimeFrequencyWorker::update()
         timer.restart();
 
         // OpenCL
-        //m_settings.fftCalculator->execute(calculationInputData.values);
+        m_settings.fftCalculator->execute(calculationInputData.values);
         // CUDA
-        size_t stageCount = utils::Math::getPowerOfTwo(m_settings.fftSize);
-
-        float* buffer0    = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * 2];
-        float* buffer1    = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * 2];
-        float* magnitudes = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond];
-        std::vector<std::complex<float>>* omegas = new std::vector<std::complex<float>>[stageCount];
-
-        constexpr size_t block_size = 64;
-
-        for (size_t stageIndex = 0; stageIndex < stageCount; ++stageIndex)
-        {
-            const auto subFftHalfSize = 1 << stageIndex;
-            omegas[stageIndex] = calc_cpu::FftCooleyTukeyUtils::getOmegas<float>(stageIndex);
-        }
-
-        std::memcpy(buffer0, calculationInputData.values, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * sizeof(float));
-
-        bit_reverse_permutation_wrapper(buffer0, buffer1, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond, block_size);
-
-        std::swap(buffer0, buffer1);
-
-        const auto complexNumberSize = 2 * sizeof(float);
-
-        for (size_t stageIndex = 0; stageIndex < stageCount; ++stageIndex)
-        {
-            const auto& srcBuffer = buffer0;
-            const auto& dstBuffer = buffer1;
-
-            const auto subFftSize = 1ull << (stageIndex + 1ull);
-            const auto subFftCount = m_settings.fftSize / subFftSize;
-
-            const auto omegaBuffer = omegas[stageIndex];
-
-            fft_stage_wrapper(srcBuffer,
-                              dstBuffer,
-                              reinterpret_cast<const float*>(omegaBuffer.data()),
-                              static_cast<unsigned int>(subFftSize),
-                              static_cast<unsigned int>(subFftCount),
-                              static_cast<unsigned int>(stageIndex),
-                              m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond,
-                              omegaBuffer.size());
-
-            std::swap(buffer0, buffer1);
-        }
+        // size_t stageCount = utils::Math::getPowerOfTwo(m_settings.fftSize);
+        // 
+        // float* buffer0    = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * 2];
+        // float* buffer1    = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * 2];
+        // float* magnitudes = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond];
+        // std::vector<std::complex<float>>* omegas = new std::vector<std::complex<float>>[stageCount];
+        // 
+        // constexpr size_t block_size = 64;
+        // 
+        // for (size_t stageIndex = 0; stageIndex < stageCount; ++stageIndex)
+        // {
+        //     const auto subFftHalfSize = 1 << stageIndex;
+        //     omegas[stageIndex] = calc_cpu::FftCooleyTukeyUtils::getOmegas<float>(stageIndex);
+        // }
+        // 
+        // std::memcpy(buffer0, calculationInputData.values, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * sizeof(float));
+        // 
+        // bit_reverse_permutation_wrapper(buffer0, buffer1, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond, block_size);
+        // 
+        // std::swap(buffer0, buffer1);
+        // 
+        // const auto complexNumberSize = 2 * sizeof(float);
+        // 
+        // for (size_t stageIndex = 0; stageIndex < stageCount; ++stageIndex)
+        // {
+        //     const auto& srcBuffer = buffer0;
+        //     const auto& dstBuffer = buffer1;
+        // 
+        //     const auto subFftSize = 1ull << (stageIndex + 1ull);
+        //     const auto subFftCount = m_settings.fftSize / subFftSize;
+        // 
+        //     const auto omegaBuffer = omegas[stageIndex];
+        // 
+        //     fft_stage_wrapper(srcBuffer,
+        //                       dstBuffer,
+        //                       reinterpret_cast<const float*>(omegaBuffer.data()),
+        //                       static_cast<unsigned int>(subFftSize),
+        //                       static_cast<unsigned int>(subFftCount),
+        //                       static_cast<unsigned int>(stageIndex),
+        //                       m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond,
+        //                       omegaBuffer.size());
+        // 
+        //     std::swap(buffer0, buffer1);
+        // }
 
         // spdlog::trace("FFT calculation, size: {}, time: {}",
         //               calculationInputData.values.size(),
@@ -175,25 +175,26 @@ void AudioFileTimeFrequencyWorker::update()
         // stage: calculate magnitudes
         timer.restart();
         // OpenCL
-        // m_settings.fftCalculator->calculateMagnitudes();
+        m_settings.fftCalculator->calculateMagnitudes();
+        float maxMagnitudeLocal = 0;
         // spdlog::trace("Magnitudes calculated: {}", timer.toString());
         // CUDA
-        calculate_magnitudes_wrapper(buffer0, magnitudes, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond, block_size);
-
-        float maxMagnitudeLocal = *std::ranges::max(magnitudes, &magnitudes[m_settings.fftCalculationsInSecond * sizeof(float) - 1]);
+        // calculate_magnitudes_wrapper(buffer0, magnitudes, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond, block_size);
+        // 
+        // float maxMagnitudeLocal = *std::ranges::max(magnitudes, &magnitudes[m_settings.fftCalculationsInSecond * sizeof(float) - 1]);
 
         std::cout << "Magnitudes calculated: " << timer.toString() << std::endl;
 
         // OpenCL
         // stage: copy magnitudes values to final OpenGL buffer
-        // m_settings.fftCalculator->copyMagnitudesTo(
-        //  openglOpenclBuffer, static_cast<cl_uint>(elementOffsetInBuffer), &maxMagnitudeLocal);
+        m_settings.fftCalculator->copyMagnitudesTo(
+         openglOpenclBuffer, static_cast<cl_uint>(elementOffsetInBuffer), &maxMagnitudeLocal);
         // spdlog::trace("Magnitudes copied: {}", timer.toString());
         
         // CUDA
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, openglOpenclBuffer);
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, elementOffsetInBuffer * sizeof(float), m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * sizeof(float), magnitudes);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+        // glBindBuffer(GL_SHADER_STORAGE_BUFFER, openglOpenclBuffer);
+        // glBufferSubData(GL_SHADER_STORAGE_BUFFER, elementOffsetInBuffer * sizeof(float), m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * sizeof(float), magnitudes);
+        // glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
         std::cout << "Magnitudes copied: " << timer.toString() << std::endl;
 
@@ -205,8 +206,8 @@ void AudioFileTimeFrequencyWorker::update()
         timer.restart();
         const auto referenceValue = std::pow(2.0f, 31.0f);
         // OpenCL
-        // m_settings.rtsaUpdater->update(
-        //   m_settings.fftCalculator->getMagnitudesBuffer(), m_rtsaGlBuffer, referenceValue);
+        m_settings.rtsaUpdater->update(
+          m_settings.fftCalculator->getMagnitudesBuffer(), m_rtsaGlBuffer, referenceValue);
         // spdlog::trace("RTSA updated: {}", timer.toString());
         // CUDA
         // -- todo --
@@ -216,10 +217,10 @@ void AudioFileTimeFrequencyWorker::update()
         // spdlog::trace("Whole spectrogram stage: {}", globalFftTimer.toString());
         std::cout << "Whole spectrogram stage: " << globalFftTimer.toString() << std::endl;
 
-        delete[] buffer0;
-        delete[] buffer1;
-        delete[] omegas;
-        delete[] magnitudes;
+        // delete[] buffer0;
+        // delete[] buffer1;
+        // delete[] omegas;
+        // delete[] magnitudes;
     }
 }
 
@@ -229,27 +230,42 @@ void AudioFileTimeFrequencyWorker::startWork()
       std::make_unique<std::jthread>([this](std::stop_token stopToken) { workLoop(stopToken); });
 }
 
+// todo: This is function is not thread safe
 void AudioFileTimeFrequencyWorker::workLoop(std::stop_token stopToken)
 {
     const auto sleepTime = 1.0f / m_settings.fftCalculationsInSecond;
-    const auto oneFftSamplesOffset =
-      m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond;
-    const auto& sampleData = m_settings.audioData.getSampleData16(0);
     size_t columnIndex = 0;
     size_t globalSamplesOffset = 0;
 
-    while (!stopToken.stop_requested() &&
-           globalSamplesOffset + m_settings.oneFftSampleCount < sampleData.size())
+    while (!stopToken.stop_requested())
     {
         std::this_thread::sleep_for(std::chrono::duration<float>(sleepTime));
+
+        // load new data
+        m_settings.audioData += m_settings.source->getSignalData();
+
+        if (m_settings.audioData.getChannelCount() == 0) {
+            continue;
+        }
+
+        const auto oneFftSamplesOffset =
+            m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond;
+        const auto& sampleData = m_settings.audioData.getChannelSampleData(0);
+
+        if (globalSamplesOffset + m_settings.oneFftSampleCount > std::visit([](auto&& sampleData) -> size_t { return sampleData.size(); }, sampleData)) {
+            continue;
+        }
 
         // create input data for FFT
         float* inputData = new float[m_settings.oneFftSampleCount];
         size_t globalIndex = globalSamplesOffset;
-        for (size_t i = 0; i < m_settings.oneFftSampleCount; ++i)
-        {
-            inputData[i] = (float)sampleData[globalIndex++];
-        }
+
+        std::visit([&](auto&& sampleData) {
+            for (size_t i = 0; i < m_settings.oneFftSampleCount; ++i)
+            {
+                inputData[i] = (float)sampleData[globalIndex++];
+            }
+        }, sampleData);
 
         {
             std::lock_guard lock{ m_mutex };

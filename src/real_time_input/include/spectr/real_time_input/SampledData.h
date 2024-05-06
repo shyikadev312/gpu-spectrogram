@@ -3,6 +3,8 @@
 #include <vector>
 #include <mutex>
 
+#include <spectr/audio_loader/SignalData.h>
+
 namespace spectr::real_time_input {
     /**
       * Simple class for storing data sampled from real-time input devices.
@@ -21,6 +23,7 @@ namespace spectr::real_time_input {
         SampledData(const SampledData&  data);
         SampledData(      SampledData&& data) noexcept(true);
         SampledData(size_t size);
+        SampledData(audio_loader::SignalData data);
 
         /**
           * Creates a new instance of SampledData containing the data from both objects.
@@ -31,6 +34,8 @@ namespace spectr::real_time_input {
           * Appends the data stored within rhs to this object.
           */
         SampledData& operator+=(SampledData& rhs);
+
+        audio_loader::SignalData toSignalData(size_t sampleRate) const;
 
         friend class RealTimeInput;
     };

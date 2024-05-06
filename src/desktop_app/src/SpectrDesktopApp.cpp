@@ -2,10 +2,10 @@
 
 #include <spectr/audio_loader/AudioLoader.h>
 #include <spectr/audio_loader/SignalDataGenerator.h>
-// #include <spectr/calc_opencl/FftCooleyTukeyRadix2CL.h>
+#include <spectr/calc_opencl/FftCooleyTukeyRadix2CL.h>
 #include <spectr/calc_opencl/OpenclApi.h>
-// #include <spectr/calc_opencl/OpenclManager.h>
-// #include <spectr/calc_opencl/RtsaUpdater.h>
+#include <spectr/calc_opencl/OpenclManager.h>
+#include <spectr/calc_opencl/RtsaUpdater.h>
 #include <spectr/desktop_app/AudioFileTimeFrequencyWorker.h>
 #include <spectr/desktop_app/CmdArgumentParser.h>
 #include <spectr/desktop_app/MockTimeFrequencyWorker.h>
@@ -14,6 +14,7 @@
 #include <spectr/utils/Assert.h>
 #include <spectr/utils/Exception.h>
 #include <spectr/utils/Version.h>
+#include <spectr/real_time_input/FileInput.h>
 #include <spectr/real_time_input/RealTimeInputPortAudio.h>
 #include <spectr/real_time_input/RealTimeInputBladeRF.h>
 
@@ -30,25 +31,25 @@ constexpr auto DefaultWindowWidth = 1920;
 constexpr auto DefaultWindowHeight = 1080;
 const auto WindowTitle = "Spectrogram renderer";
 
-// std::vector<cl_context_properties> getOpenCLContextProperties(GLFWwindow* window)
-// {
-// #ifdef _WIN32
-//     const std::vector<cl_context_properties> openclContextProperties{
-//         CL_GL_CONTEXT_KHR,
-//         reinterpret_cast<cl_context_properties>(glfwGetWGLContext(window)),
-//         CL_WGL_HDC_KHR,
-//         reinterpret_cast<cl_context_properties>(GetDC(glfwGetWin32Window(window))),
-//     };
-// #elif defined(OS_LINUX)
-//     const std::vector<cl_context_properties> openclContextProperties{
-//         CL_GL_CONTEXT_KHR,
-//         reinterpret_cast<cl_context_properties>(glfwGetGLXContext(window)),
-//         CL_GLX_DISPLAY_KHR,
-//         reinterpret_cast<cl_context_properties>(glfwGetX11Display()),
-//     };
-// #endif
-//     return openclContextProperties;
-// }
+std::vector<cl_context_properties> getOpenCLContextProperties(GLFWwindow* window)
+{
+#ifdef _WIN32
+    const std::vector<cl_context_properties> openclContextProperties{
+        CL_GL_CONTEXT_KHR,
+        reinterpret_cast<cl_context_properties>(glfwGetWGLContext(window)),
+        CL_WGL_HDC_KHR,
+        reinterpret_cast<cl_context_properties>(GetDC(glfwGetWin32Window(window))),
+    };
+#elif defined(OS_LINUX)
+    const std::vector<cl_context_properties> openclContextProperties{
+        CL_GL_CONTEXT_KHR,
+        reinterpret_cast<cl_context_properties>(glfwGetGLXContext(window)),
+        CL_GLX_DISPLAY_KHR,
+        reinterpret_cast<cl_context_properties>(glfwGetX11Display()),
+    };
+#endif
+    return openclContextProperties;
+}
 
 DesktopAppSettings parseCommandLineArguments(int argc, const char* argv[])
 {
@@ -88,6 +89,9 @@ DesktopAppSettings parseCommandLineArguments(int argc, const char* argv[])
 
     const auto audioFilePath = utils::Asset::getPath(assetPathRelative);
     settings.audioFilePath = audioFilePath;
+
+    // settings.source = AudioSource::File;
+    settings.source = AudioSource::BladeRF;
 
     return settings;
 }
@@ -145,18 +149,24 @@ int SpectrDesktopApp::mainImpl(int argc, const char* argv[])
     std::cout << "FFT size: " << settings.fftSize;
     std::cout << "FFT calculations per second: " << settings.fftCalculationPerSecond;
 
+    switch (settings.source) {
+        case AudioSource::File:
+            m_inputSource = std::make_shared<real_time_input::FileInput>(settings.audioFilePath);
+            break;
+        case AudioSource::PortAudio:
+            m_inputSource = std::make_shared<real_time_input::RealTimeInputPortAudio>();
+            break;
+        case AudioSource::BladeRF:
+            m_inputSource = std::make_shared<real_time_input::RealTimeInputBladeRF>();
+            break;
+    }
+
     initGraphics();
     initFftCalculator(settings);
     m_waterfallWindow = std::make_unique<WaterfallWindow>(m_input, m_timeFrequencyHeatmapContainer);
     m_rtsaWindow = std::make_unique<RtsaWindow>(m_input, m_rtsaHeatmapContainer);
     m_splitWindow = std::make_unique<SplitWindow>(m_input, m_timeFrequencyHeatmapContainer, m_rtsaHeatmapContainer);
     m_currentWindow = m_waterfallWindow;
-
-    switch (settings.source) {
-        case AudioSource::File: break;
-        case AudioSource::PortAudio: m_inputSource = std::make_unique<real_time_input::RealTimeInputPortAudio>(); break;
-        case AudioSource::BladeRF: m_inputSource = std::make_unique<real_time_input::RealTimeInputBladeRF>(); break;
-    }
 
     // create fonts
     ImGuiIO& io = ImGui::GetIO();
@@ -304,12 +314,12 @@ void SpectrDesktopApp::initFftCalculator(const DesktopAppSettings& settings)
     }
     else
     {
-        // const auto openglContextProperties = getOpenCLContextProperties(m_window);
-        // auto openclManager = std::make_shared<calc_opencl::OpenclManager>(openglContextProperties);
+        const auto openglContextProperties = getOpenCLContextProperties(m_window);
+        auto openclManager = std::make_shared<calc_opencl::OpenclManager>(openglContextProperties);
 
-        const auto audioData =
-          //
-          audio_loader::AudioLoader::load(settings.audioFilePath);
+        // const auto audioData =
+        //   //
+        //   audio_loader::AudioLoader::load(settings.audioFilePath);
         /*audio_loader::AudioDataGenerator::generateWithConstant<int16_t>(
           1 << 14, 30, std::numeric_limits<int16_t>::max());*/
         // audio_loader::AudioDataGenerator::generate<int16_t>(1 << 14, 30, { { 4, 32000 } });
@@ -322,23 +332,23 @@ void SpectrDesktopApp::initFftCalculator(const DesktopAppSettings& settings)
         //              audioData.getSampleRate(),
         //              audioData.getDuration());
 
-        std::cout << "Loaded signal data:\n"
-                     "\tSample rate: " << audioData.getSampleRate() << " Hz\n"
-                     "\tDuration: " << audioData.getDuration() << " seconds" << std::endl;
-
-        ASSERT(audioData.getSampleDataType() == audio_loader::SampleDataType::Int16);
+        // std::cout << "Loaded signal data:\n"
+        //              "\tSample rate: " << audioData.getSampleRate() << " Hz\n"
+        //              "\tDuration: " << audioData.getDuration() << " seconds" << std::endl;
+        // 
+        // ASSERT(audioData.getSampleDataType() == audio_loader::SampleDataType::Int16);
 
         const auto columnsInOneSecond = settings.fftCalculationPerSecond;
 
         const auto fftFrequencyRatio =
-          static_cast<float>(audioData.getSampleRate()) / settings.fftSize;
+          static_cast<float>(m_inputSource->getSampleRate()) / settings.fftSize;
 
         const auto valuesPerHertzUnit = 1.0f / fftFrequencyRatio;
 
         const auto frequencyOffset = -fftFrequencyRatio / 2.0f;
 
-        // auto fftCalculator = std::make_unique<calc_opencl::FftCooleyTukeyRadix2>(
-        //   openclManager->getContext(), settings.fftSize);
+        auto fftCalculator = std::make_unique<calc_opencl::FftCooleyTukeyRadix2>(
+          openclManager->getContext(), settings.fftSize);
 
         // create spectrogram container
         render_gl::TimeFrequencyHeatmapContainerSettings heatmapContainerSettings{
@@ -368,23 +378,23 @@ void SpectrDesktopApp::initFftCalculator(const DesktopAppSettings& settings)
         const auto rtsaHistoryBufferCount =
           static_cast<size_t>(settings.fftCalculationPerSecond * rtsaHistoryDuration);
 
-        // auto rtsaUpdater = std::make_unique<calc_opencl::RtsaUpdater>(
-        //   openclManager->getContext(),
-        //   rtsaContainerSettings.frequencyValuesCount,
-        //   rtsaContainerSettings.magnitudeRangeValuesCount,
-        //   rtsaHistoryBufferCount,
-        //   magnitudeDbfsRange,
-        //   rtsaContainerSettings.frequencyValuesCount * rtsaContainerSettings.magnitudeRangeValuesCount * sizeof(float) * 2);
+        auto rtsaUpdater = std::make_unique<calc_opencl::RtsaUpdater>(
+          openclManager->getContext(),
+          rtsaContainerSettings.frequencyValuesCount,
+          rtsaContainerSettings.magnitudeRangeValuesCount,
+          rtsaHistoryBufferCount,
+          magnitudeDbfsRange,
+          rtsaContainerSettings.frequencyValuesCount * rtsaContainerSettings.magnitudeRangeValuesCount * sizeof(float) * 2);
 
         // worker
         AudioFileTimeFrequencyWorkerSettings audioFileWorkerSettings{
-            .audioData = audioData,
+            .source = m_inputSource,
             .oneFftSampleCount = settings.fftSize,
             .fftCalculationsInSecond = settings.fftCalculationPerSecond,
             .heatmapContainer = m_timeFrequencyHeatmapContainer,
             .rtsaHeatmapContainer = m_rtsaHeatmapContainer,
-            // .fftCalculator = std::move(fftCalculator),
-            // .rtsaUpdater = std::move(rtsaUpdater),
+            .fftCalculator = std::move(fftCalculator),
+            .rtsaUpdater = std::move(rtsaUpdater),
             .rtsaBufferSize = rtsaContainerSettings.frequencyValuesCount * rtsaContainerSettings.magnitudeRangeValuesCount * sizeof(float) * 2,
             .fftSize = settings.fftSize
         };

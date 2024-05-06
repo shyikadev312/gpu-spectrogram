@@ -6,7 +6,7 @@
 
 namespace spectr::real_time_input {
     /**
-      * This class uses PortAudio to read data form a real-time audio interface.
+      * This class uses PortAudio to read data from a real-time audio interface.
       * 
       * @see SampledData
       */
@@ -64,5 +64,9 @@ namespace spectr::real_time_input {
           *         PortAudio or the PortAudio data stream.
           */
         ~RealTimeInputPortAudio() noexcept(false);
+
+        audio_loader::SignalData getSignalData() noexcept(true);
+
+        int getSampleRate() const noexcept(true);
     };
 }

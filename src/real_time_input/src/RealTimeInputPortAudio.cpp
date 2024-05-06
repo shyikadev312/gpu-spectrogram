@@ -4,7 +4,7 @@
 #include <format>
 
 constexpr auto sampleFormat    = paFloat32;
-constexpr auto sampleRate      = 44100;
+constexpr auto sample_rate     = 44100;
 constexpr auto framesPerBuffer = 256;
 
 namespace spectr::real_time_input {
@@ -46,7 +46,7 @@ namespace spectr::real_time_input {
                                      1,
                                      0,
                                      sampleFormat,
-                                     sampleRate,
+                                     sample_rate,
                                      framesPerBuffer,
                                      AudioInputCallback,
                                      this);
@@ -104,5 +104,13 @@ namespace spectr::real_time_input {
 
             isRecording = false;
         }
+    }
+
+    audio_loader::SignalData RealTimeInputPortAudio::getSignalData() noexcept(true) {
+        return getData().toSignalData(sample_rate);
+    }
+    
+    int RealTimeInputPortAudio::getSampleRate() const noexcept(true) {
+        return sample_rate;
     }
 }

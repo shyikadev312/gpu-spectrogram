@@ -11,7 +11,7 @@ namespace
 template<typename TSampleData>
 size_t getSampleCountT(const TSampleData& sampleData)
 {
-    ASSERT(!sampleData.empty());
+    // ASSERT(!sampleData.empty());
     return sampleData.size();
 }
 
@@ -123,5 +123,60 @@ const SampleDataFloat& SignalData::getSampleDataFloat(size_t channelIndex) const
 float SignalData::getDuration() const
 {
     return static_cast<float>(m_sampleCount) / m_sampleRate;
+}
+
+SignalData& SignalData::operator+=(SignalData data) {
+    if (data.m_channelsDatas.size() == 0) {
+        return *this;
+    }
+
+    if (data.m_channelsDatas.size() < m_channelsDatas.size()) {
+        throw std::runtime_error("Data must have the same or a higher amount of channels");
+    }
+
+    // Copy sample rate from other sample if this has no data yet
+    if (m_channelsDatas.size() == 0) {
+        m_sampleRate = data.m_sampleRate;
+    }
+
+    for (size_t i = m_channelsDatas.size(); i < data.m_channelsDatas.size(); i++) {
+        auto try_creating = [&]<typename SampleType>() {
+            if (std::holds_alternative<SampleType>(data.m_channelsDatas[i])) {
+                m_channelsDatas.push_back(SampleType { });
+            }
+        };
+
+        try_creating.operator()<SampleData16>();
+        try_creating.operator()<SampleData32>();
+        try_creating.operator()<SampleData64>();
+        try_creating.operator()<SampleDataFloat>();
+    }
+
+    for (size_t i = 0; i < m_channelsDatas.size(); i++) {
+        auto& channel1 = m_channelsDatas[i];
+        auto& channel2 = data.m_channelsDatas[i];
+
+        auto try_adding = [&]<typename SampleType>() {
+            if (std::holds_alternative<SampleType>(channel1)) {
+                if (!std::holds_alternative<SampleType>(channel2)) {
+                    throw std::runtime_error("Data must have the same type");
+                }
+
+                auto& src = std::get<SampleType>(channel2);
+                auto& dst = std::get<SampleType>(channel1);
+
+                dst.insert(dst.end(), src.begin(), src.end());
+            }
+        };
+
+        try_adding.operator()<SampleData16>();
+        try_adding.operator()<SampleData32>();
+        try_adding.operator()<SampleData64>();
+        try_adding.operator()<SampleDataFloat>();
+    }
+
+    m_sampleCount += data.getSampleCount();
+
+    return *this;
 }
 }
