@@ -22,6 +22,12 @@ enum class FrontendEngine {
     OpenGL
 };
 
+enum class AudioSource {
+    File,
+    PortAudio,
+    BladeRF
+};
+
 struct DesktopAppSettings
 {
     Command command;
@@ -31,5 +37,6 @@ struct DesktopAppSettings
     size_t fftCalculationPerSecond = 0;
     BackendEngine backend = BackendEngine::CUDA;
     FrontendEngine frontend = FrontendEngine::OpenGL;
+    AudioSource source = AudioSource::BladeRF;
 };
 }

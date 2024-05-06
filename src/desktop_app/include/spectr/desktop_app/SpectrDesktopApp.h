@@ -9,6 +9,7 @@
 #include <spectr/render_gl/GlfwUtils.h>
 #include <spectr/render_gl/RtsaContainer.h>
 #include <spectr/render_gl/TimeFrequencyHeatmapContainer.h>
+#include <spectr/real_time_input/RealTimeInput.h>
 
 #include <functional>
 #include <memory>
@@ -46,5 +47,6 @@ private:
     std::shared_ptr<render_gl::RtsaContainer> m_rtsaHeatmapContainer;
     std::unique_ptr<render_gl::FpsGuard> m_fpsGuard;
     std::vector<std::function<void()>> m_onMainLoopActions;
+    std::shared_ptr<real_time_input::RealTimeInput> m_inputSource;
 };
 }

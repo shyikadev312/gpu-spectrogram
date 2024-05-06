@@ -28,7 +28,8 @@ __global__ void bit_reverse_permutation(
 
 void bit_reverse_permutation_wrapper(const float* input,
                                            float* output,
-                                           size_t  size) {
+                                           size_t size,
+                                           size_t block_size) {
     float2* in, *out;
 
     cudaMalloc((void**)&in,  sizeof(float2) * size);
@@ -36,7 +37,7 @@ void bit_reverse_permutation_wrapper(const float* input,
 
     cudaMemcpy(in, input, sizeof(float2) * size, cudaMemcpyHostToDevice);
 
-    bit_reverse_permutation<<<1, size>>>(in, out);
+    bit_reverse_permutation<<<block_size, size / block_size>>>(in, out);
 
     cudaDeviceSynchronize();
 
@@ -92,7 +93,8 @@ __global__ void calculate_magnitudes(
 
 void calculate_magnitudes_wrapper(const float* fft,
                                         float* magnitudes,
-                                        size_t size) {
+                                        size_t size,
+                                        size_t block_size) {
     float2* in;
     float* out;
 
@@ -101,14 +103,14 @@ void calculate_magnitudes_wrapper(const float* fft,
 
     cudaMemcpy(in, fft, sizeof(float2) * size, cudaMemcpyHostToDevice);
 
-    calculate_magnitudes<<<1, size>>>(in, out);
+    calculate_magnitudes<<<block_size, size / block_size>>>(in, out);
+
+    cudaDeviceSynchronize();
 
     cudaMemcpy(magnitudes, out, sizeof(float) * size, cudaMemcpyDeviceToHost);
 
     cudaFree(in);
     cudaFree(out);
-
-    cudaDeviceSynchronize();
 }
 
 
@@ -145,7 +147,8 @@ __global__ void find_max(
 
 void find_max_wrapper(const float* values,
                             float* output,
-                            size_t size) {
+                            size_t size,
+                            size_t block_size) {
     float* in, *tmp, *out;
 
     cudaMalloc((void**)&in,  sizeof(float) * size);
@@ -154,7 +157,7 @@ void find_max_wrapper(const float* values,
 
     cudaMemcpy(in, values, sizeof(float) * size, cudaMemcpyHostToDevice);
 
-    find_max<<<1, size>>>(in, tmp, out);
+    find_max<<<block_size, size / block_size>>>(in, tmp, out);
 
     cudaDeviceSynchronize();
 
@@ -165,6 +168,7 @@ void find_max_wrapper(const float* values,
     cudaFree(out);
 }
 
+// todo: don't copy each time.
 void fft_stage_wrapper(const float* input,
                              float* output,
                        const float* omegaValues,
@@ -175,6 +179,9 @@ void fft_stage_wrapper(const float* input,
                        size_t omega_size) {
     float2* in, *out, *omega;
 
+    dim3 blocks(subFftCount, subFftSize / 2, 1);
+    dim3 threads(1, 1, 1);
+
     cudaMalloc((void**)&in,    sizeof(float2) * input_size);
     cudaMalloc((void**)&out,   sizeof(float2) * input_size);
     cudaMalloc((void**)&omega, sizeof(float2) * omega_size);
@@ -182,7 +189,7 @@ void fft_stage_wrapper(const float* input,
     cudaMemcpy(in,    input,       sizeof(float2) * input_size, cudaMemcpyHostToDevice);
     cudaMemcpy(omega, omegaValues, sizeof(float2) * omega_size, cudaMemcpyHostToDevice);
 
-    fft_stage<<<1, input_size>>>(in, out, omega, subFftSize, subFftCount, stageIndex);
+    fft_stage<<<blocks, threads>>>(in, out, omega, subFftSize, subFftCount, stageIndex);
 
     cudaDeviceSynchronize();
 

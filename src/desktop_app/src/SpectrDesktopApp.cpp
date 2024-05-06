@@ -14,6 +14,8 @@
 #include <spectr/utils/Assert.h>
 #include <spectr/utils/Exception.h>
 #include <spectr/utils/Version.h>
+#include <spectr/real_time_input/RealTimeInputPortAudio.h>
+#include <spectr/real_time_input/RealTimeInputBladeRF.h>
 
 // #include <spdlog/spdlog.h>
 
@@ -149,6 +151,12 @@ int SpectrDesktopApp::mainImpl(int argc, const char* argv[])
     m_rtsaWindow = std::make_unique<RtsaWindow>(m_input, m_rtsaHeatmapContainer);
     m_splitWindow = std::make_unique<SplitWindow>(m_input, m_timeFrequencyHeatmapContainer, m_rtsaHeatmapContainer);
     m_currentWindow = m_waterfallWindow;
+
+    switch (settings.source) {
+        case AudioSource::File: break;
+        case AudioSource::PortAudio: m_inputSource = std::make_unique<real_time_input::RealTimeInputPortAudio>(); break;
+        case AudioSource::BladeRF: m_inputSource = std::make_unique<real_time_input::RealTimeInputBladeRF>(); break;
+    }
 
     // create fonts
     ImGuiIO& io = ImGui::GetIO();

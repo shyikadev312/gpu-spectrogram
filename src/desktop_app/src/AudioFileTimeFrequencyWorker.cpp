@@ -10,6 +10,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 namespace spectr::desktop_app
 {
@@ -69,13 +70,17 @@ void AudioFileTimeFrequencyWorker::update()
         // stage: calculate FFT
         timer.restart();
 
+        // OpenCL
         //m_settings.fftCalculator->execute(calculationInputData.values);
+        // CUDA
         size_t stageCount = utils::Math::getPowerOfTwo(m_settings.fftSize);
 
         float* buffer0    = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * 2];
         float* buffer1    = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * 2];
         float* magnitudes = new float[m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond];
         std::vector<std::complex<float>>* omegas = new std::vector<std::complex<float>>[stageCount];
+
+        constexpr size_t block_size = 64;
 
         for (size_t stageIndex = 0; stageIndex < stageCount; ++stageIndex)
         {
@@ -85,7 +90,7 @@ void AudioFileTimeFrequencyWorker::update()
 
         std::memcpy(buffer0, calculationInputData.values, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * sizeof(float));
 
-        bit_reverse_permutation_wrapper(buffer0, buffer1, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond);
+        bit_reverse_permutation_wrapper(buffer0, buffer1, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond, block_size);
 
         std::swap(buffer0, buffer1);
 
@@ -97,7 +102,6 @@ void AudioFileTimeFrequencyWorker::update()
             const auto& dstBuffer = buffer1;
 
             const auto subFftSize = 1ull << (stageIndex + 1ull);
-            const auto subFftHalfSize = subFftSize / 2;
             const auto subFftCount = m_settings.fftSize / subFftSize;
 
             const auto omegaBuffer = omegas[stageIndex];
@@ -120,6 +124,7 @@ void AudioFileTimeFrequencyWorker::update()
 
         std::cout << "FFT calculation, size: " << m_settings.oneFftSampleCount << ", time: " << timer.toString() << std::endl;
 
+        // OpenCL
         // const auto fftResultGpu = m_settings.fftCalculator->getFffBufferCpu();
         // const auto magnitudesGPU =
         //   calc_cpu::FftCooleyTukeyRadix2::getMagnitudesFromFFT(fftResultGpu);
@@ -167,24 +172,27 @@ void AudioFileTimeFrequencyWorker::update()
         const auto elementOffsetInBuffer =
           columnLocalIndex * m_settings.heatmapContainer->getSettings().columnHeightElementCount;
 
-        float maxMagnitudeLocal = 0;
-
         // stage: calculate magnitudes
         timer.restart();
+        // OpenCL
         // m_settings.fftCalculator->calculateMagnitudes();
         // spdlog::trace("Magnitudes calculated: {}", timer.toString());
+        // CUDA
+        calculate_magnitudes_wrapper(buffer0, magnitudes, m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond, block_size);
 
-        calculate_magnitudes_wrapper(buffer0, magnitudes, m_settings.fftSize / 2);
+        float maxMagnitudeLocal = *std::ranges::max(magnitudes, &magnitudes[m_settings.fftCalculationsInSecond * sizeof(float) - 1]);
 
         std::cout << "Magnitudes calculated: " << timer.toString() << std::endl;
 
+        // OpenCL
         // stage: copy magnitudes values to final OpenGL buffer
         // m_settings.fftCalculator->copyMagnitudesTo(
         //  openglOpenclBuffer, static_cast<cl_uint>(elementOffsetInBuffer), &maxMagnitudeLocal);
         // spdlog::trace("Magnitudes copied: {}", timer.toString());
-
+        
+        // CUDA
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, openglOpenclBuffer);
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, elementOffsetInBuffer * sizeof(float), m_settings.fftSize / 2 * sizeof(float), magnitudes);
+        glBufferSubData(GL_SHADER_STORAGE_BUFFER, elementOffsetInBuffer * sizeof(float), m_settings.audioData.getSampleRate() / m_settings.fftCalculationsInSecond * sizeof(float), magnitudes);
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
         std::cout << "Magnitudes copied: " << timer.toString() << std::endl;
@@ -196,9 +204,12 @@ void AudioFileTimeFrequencyWorker::update()
         // stage: apply the calculated values to the RTSA heatmap buffer:
         timer.restart();
         const auto referenceValue = std::pow(2.0f, 31.0f);
+        // OpenCL
         // m_settings.rtsaUpdater->update(
         //   m_settings.fftCalculator->getMagnitudesBuffer(), m_rtsaGlBuffer, referenceValue);
         // spdlog::trace("RTSA updated: {}", timer.toString());
+        // CUDA
+        // -- todo --
 
         std::cout << "RTSA updated: " << timer.toString() << std::endl;
 

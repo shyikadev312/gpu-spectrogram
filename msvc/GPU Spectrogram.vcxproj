@@ -88,7 +88,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ImGui.lib;Real Time Input.lib;Calc CUDA.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>PortAudio.lib;bladeRF.lib;ImGui.lib;Real Time Input.lib;Calc CUDA.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\lib\win32</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -109,7 +109,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ImGui.lib;Real Time Input.lib;Calc CUDA.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>PortAudio.lib;bladeRF.lib;ImGui.lib;Real Time Input.lib;Calc CUDA.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\lib\win32</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -126,9 +126,12 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ImGui.lib;Real Time Input.lib;Calc CUDA.lib;Calc CPU.lib;Calc OpenCL.lib;GL Renderer.lib;Utils.lib;Audio Loader.lib;glfw3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>PortAudio.lib;bladeRF.lib;ImGui.lib;Real Time Input.lib;Calc CUDA.lib;Calc CPU.lib;Calc OpenCL.lib;GL Renderer.lib;Utils.lib;Audio Loader.lib;glfw3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\lib\x64;..\x64\Debug;..\lib\win64</AdditionalLibraryDirectories>
     </Link>
+    <CudaCompile>
+      <FastMath>true</FastMath>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -147,9 +150,12 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ImGui.lib;Real Time Input.lib;Calc CUDA.lib;Calc CPU.lib;Calc OpenCL.lib;GL Renderer.lib;Utils.lib;Audio Loader.lib;glfw3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>PortAudio.lib;bladeRF.lib;ImGui.lib;Real Time Input.lib;Calc CUDA.lib;Calc CPU.lib;Calc OpenCL.lib;GL Renderer.lib;Utils.lib;Audio Loader.lib;glfw3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\lib\x64;..\bin64;..\lib\win64;..\x64\Release</AdditionalLibraryDirectories>
     </Link>
+    <CudaCompile>
+      <FastMath>true</FastMath>
+    </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\desktop_app\src\AudioFileTimeFrequencyWorker.cpp" />

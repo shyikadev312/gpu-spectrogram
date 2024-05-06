@@ -15,10 +15,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\real_time_input\src\RealTimeInput.cpp">
+    <ClCompile Include="..\src\real_time_input\src\RealTimeInputPortAudio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\real_time_input\src\SampledData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\real_time_input\src\RealTimeInputBladeRF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\real_time_input\src\RealTimeInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -27,6 +33,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\real_time_input\include\spectr\real_time_input\SampledData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\real_time_input\include\spectr\real_time_input\RealTimeInputBladeRF.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\real_time_input\include\spectr\real_time_input\RealTimeInputPortAudio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

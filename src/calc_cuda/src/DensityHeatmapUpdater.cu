@@ -17,15 +17,16 @@ __global__ void convert_to_dbfs(
 }
 
 void convert_to_dbfs_wrapper(float* magnitudes,
-                           float referenceValue,
-                           size_t size) {
+                             float  referenceValue,
+                             size_t size,
+                             size_t block_size) {
     float* mag;
 
     cudaMalloc((void**)&mag, sizeof(float) * size);
 
     cudaMemcpy(mag, magnitudes, sizeof(float) * size, cudaMemcpyHostToDevice);
 
-    convert_to_dbfs<<<1, size>>>(mag, referenceValue);
+    convert_to_dbfs<<<block_size, size / block_size>>>(mag, referenceValue);
 
     cudaDeviceSynchronize();
 
@@ -90,7 +91,8 @@ void update_density_heatmap_wrapper(float* heatmap,
                                   unsigned int mostRecentBufferIndex,
                                   float magnitudeIndexToDbfsCoeff,
                                   size_t size,
-                                  size_t historyBufferSize) {
+                                  size_t historyBufferSize,
+                                  size_t block_size) {
     float2* heat;
     float* history;
 
@@ -100,7 +102,7 @@ void update_density_heatmap_wrapper(float* heatmap,
     cudaMemcpy(heat, heatmap, sizeof(float2) * size, cudaMemcpyHostToDevice);
     cudaMemcpy(history, dbfsHistoryBuffer, sizeof(float) * historyBufferSize, cudaMemcpyHostToDevice);
 
-    update_density_heatmap <<<1, size >>>(heat, history, heatmapWidth, heatmapHeight, historyBufferCount, mostRecentBufferIndex, magnitudeIndexToDbfsCoeff);
+    update_density_heatmap<<<block_size, size / block_size>>>(heat, history, heatmapWidth, heatmapHeight, historyBufferCount, mostRecentBufferIndex, magnitudeIndexToDbfsCoeff);
 
     cudaDeviceSynchronize();
 

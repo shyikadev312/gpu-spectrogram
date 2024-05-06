@@ -2,7 +2,8 @@
 
 extern void bit_reverse_permutation_wrapper(const float* input,
                                                   float* output,
-                                                  size_t  size);
+                                                  size_t size,
+                                                  size_t block_size);
 
 extern void fft_stage_wrapper(const float* input,
                                     float* output,
@@ -15,7 +16,8 @@ extern void fft_stage_wrapper(const float* input,
 
 extern void convert_to_dbfs_wrapper(float* magnitudes,
                                   float referenceValue,
-                                  size_t size);
+                                  size_t size,
+                                  size_t block_size);
 
 extern void update_density_heatmap_wrapper(float* heatmap,
                                          float* dbfsHistoryBuffer,
@@ -25,12 +27,15 @@ extern void update_density_heatmap_wrapper(float* heatmap,
                                          unsigned int mostRecentBufferIndex,
                                          float magnitudeIndexToDbfsCoeff,
                                          size_t size,
-                                         size_t historyBufferSize);
+                                         size_t historyBufferSize,
+                                         size_t block_size);
 
 extern void calculate_magnitudes_wrapper(const float* fft,
                                                float* magnitudes,
-                                               size_t size);
+                                               size_t size,
+                                               size_t block_size);
 
 extern void find_max_wrapper(const float* values,
                                    float* output,
-                                   size_t size);
+                                   size_t size,
+                                   size_t block_size);
