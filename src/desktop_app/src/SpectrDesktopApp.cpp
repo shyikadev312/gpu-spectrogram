@@ -64,7 +64,7 @@ DesktopAppSettings parseCommandLineArguments(int argc, const char* argv[])
 
     DesktopAppSettings settings;
     settings.command = Command::Execute;
-    settings.fftCalculationPerSecond = 32;
+    settings.fftCalculationPerSecond = 28;
 
     const auto powerOfTwo = 16u;
     settings.fftSize = 1ull << powerOfTwo;
@@ -163,7 +163,7 @@ int SpectrDesktopApp::mainImpl(int argc, const char* argv[])
 
     initGraphics();
     initFftCalculator(settings);
-    m_waterfallWindow = std::make_unique<WaterfallWindow>(m_input, m_timeFrequencyHeatmapContainer);
+    m_waterfallWindow = std::make_unique<WaterfallWindow>(m_input, m_timeFrequencyHeatmapContainer, m_inputSource->getFrequencyOffset());
     m_rtsaWindow = std::make_unique<RtsaWindow>(m_input, m_rtsaHeatmapContainer);
     m_splitWindow = std::make_unique<SplitWindow>(m_input, m_timeFrequencyHeatmapContainer, m_rtsaHeatmapContainer);
     m_currentWindow = m_waterfallWindow;
@@ -374,7 +374,7 @@ void SpectrDesktopApp::initFftCalculator(const DesktopAppSettings& settings)
         };
         m_rtsaHeatmapContainer = std::make_shared<render_gl::RtsaContainer>(rtsaContainerSettings);
 
-        const auto rtsaHistoryDuration = 2.0f; // hardcoded empiric value, can be changed
+        const auto rtsaHistoryDuration = 4.0f; // hardcoded empiric value, can be changed
         const auto rtsaHistoryBufferCount =
           static_cast<size_t>(settings.fftCalculationPerSecond * rtsaHistoryDuration);
 

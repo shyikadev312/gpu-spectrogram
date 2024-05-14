@@ -114,14 +114,14 @@ Range TimeFrequencyHeatmapContainer::getTimeRange() const
     return { minX, maxX };
 }
 
-Range TimeFrequencyHeatmapContainer::getFrequencyRange() const
+Range TimeFrequencyHeatmapContainer::getFrequencyRange(size_t offset) const
 {
-    const auto minY = 0;
+    const auto minY = 0.0f;
 
     const auto elementHeight = 1.0f / m_settings.valuesInOneHertz;
     const auto maxY = m_settings.columnHeightElementCount * elementHeight;
 
-    return { minY, maxY };
+    return { minY + offset, maxY + offset };
 }
 
 glm::vec2 TimeFrequencyHeatmapContainer::getColumnSize() const

@@ -2,6 +2,7 @@
 
 #include <spectr/desktop_app/CameraWaterfallMover.h>
 #include <spectr/desktop_app/MinMaxWidget.h>
+#include <spectr/desktop_app/BladeRFInputFrame.h>
 #include <spectr/utils/Asset.h>
 
 using namespace std::placeholders;
@@ -16,9 +17,11 @@ constexpr auto HertzToPixelCoeff = 1.0f / 1000.0f;
 
 WaterfallWindow::WaterfallWindow(
   std::shared_ptr<Input> input,
-  std::shared_ptr<render_gl::TimeFrequencyHeatmapContainer> container)
+  std::shared_ptr<render_gl::TimeFrequencyHeatmapContainer> container,
+  size_t offset)
   : m_input{ input }
   , m_timeFrequencyHeatmapContainer{ container }
+  , m_frequencyOffset { offset }
 {
     // create fonts
     ImGuiIO& io = ImGui::GetIO();
@@ -158,6 +161,20 @@ WaterfallWindow::WaterfallWindow(
           m_heatmapRenderer->setScaleMaxValue(maxValue);
       });
 
+    // create bladeRF input settings widget with sliders
+    auto bladeRFInputWidget = std::make_shared<BladeRFInputFrame>(uiFont);
+    m_onRenderActions.push_back(
+        [=, this](const render_gl::RenderContext& renderContext) {
+            bladeRFInputWidget->render(renderContext);
+        });
+
+    m_onMainLoopActions.push_back(
+        [bladeRFInputWidget, this]() {
+            const auto frequency = bladeRFInputWidget->getFrequency();
+            const auto sample_rate = bladeRFInputWidget->getSampleRate();
+
+        });
+
     // widget showing info about the point where mouse points
     auto worldPointToTextCallback = [this](const glm::vec2& worldPoint)
     {
@@ -178,14 +195,14 @@ WaterfallWindow::WaterfallWindow(
         if (m_heatmapViewSettingsWidget->getFrequencyAxisScale() ==
             render_gl::FrequencyAxisScale::Linear)
         {
-            ss << frequencyCoord << " Hz\n";
+            ss << std::fixed << (frequencyCoord + m_frequencyOffset) << " Hz\n";
         }
         else
         {
             const auto maxFrequency = m_timeFrequencyHeatmapContainer->getFrequencyRange().max;
             const auto frequency =
-              render_gl::LogScaleUtils::getFrequency(frequencyCoord, maxFrequency);
-            ss << frequency << " Hz\n";
+              render_gl::LogScaleUtils::getFrequency(frequencyCoord + m_frequencyOffset, maxFrequency + m_frequencyOffset);
+            ss << std::fixed << frequency << " Hz\n";
         }
 
         return ss.str();
@@ -265,7 +282,7 @@ void WaterfallWindow::recreateAxis()
     }
     else if (frequencyAxisScale == render_gl::FrequencyAxisScale::Logarithmic)
     {
-        const auto frequencyRange = m_timeFrequencyHeatmapContainer->getFrequencyRange();
+        const auto frequencyRange = m_timeFrequencyHeatmapContainer->getFrequencyRange(m_frequencyOffset);
 
         frequencyAxisBig1 = std::make_shared<render_gl::LogarithmicAxisRenderer>(
           frequencyRange, frequencyAxisDirection, frequencyAxisDock1, m_axisFont);

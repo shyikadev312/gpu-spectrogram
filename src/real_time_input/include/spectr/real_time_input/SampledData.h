@@ -37,6 +37,8 @@ namespace spectr::real_time_input {
 
         audio_loader::SignalData toSignalData(size_t sampleRate) const;
 
+        void addSamples(std::vector<int16_t> buffer);
+
         friend class RealTimeInput;
     };
 }

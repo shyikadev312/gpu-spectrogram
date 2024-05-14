@@ -45,4 +45,8 @@ namespace spectr::real_time_input {
 
         return audio_loader::SignalData { sampleRate, data };
     }
+
+    void SampledData::addSamples(std::vector<int16_t> buffer) {
+        samples.insert(samples.end(), buffer.begin(), buffer.end());
+    }
 }

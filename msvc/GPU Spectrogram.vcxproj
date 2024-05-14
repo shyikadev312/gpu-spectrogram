@@ -159,6 +159,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\desktop_app\src\AudioFileTimeFrequencyWorker.cpp" />
+    <ClCompile Include="..\src\desktop_app\src\BladeRFInputFrame.cpp" />
     <ClCompile Include="..\src\desktop_app\src\CameraBoundsController.cpp" />
     <ClCompile Include="..\src\desktop_app\src\CameraWaterfallMover.cpp" />
     <ClCompile Include="..\src\desktop_app\src\CmdArgumentParser.cpp" />
@@ -179,6 +180,7 @@
   <ItemGroup>
     <ClInclude Include="..\include\stdarg.hpp" />
     <ClInclude Include="..\src\desktop_app\include\spectr\desktop_app\AudioFileTimeFrequencyWorker.h" />
+    <ClInclude Include="..\src\desktop_app\include\spectr\desktop_app\BladeRFInputFrame.h" />
     <ClInclude Include="..\src\desktop_app\include\spectr\desktop_app\CameraBoundsController.h" />
     <ClInclude Include="..\src\desktop_app\include\spectr\desktop_app\CameraWaterfallMover.h" />
     <ClInclude Include="..\src\desktop_app\include\spectr\desktop_app\CmdArgumentParser.h" />

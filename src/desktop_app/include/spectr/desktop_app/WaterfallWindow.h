@@ -19,7 +19,8 @@ class WaterfallWindow : public Window
 {
 public:
     WaterfallWindow(std::shared_ptr<Input> input,
-                    std::shared_ptr<render_gl::TimeFrequencyHeatmapContainer> container);
+                    std::shared_ptr<render_gl::TimeFrequencyHeatmapContainer> container,
+                    size_t offset);
 
     void onMainLoopUpdate() override;
 
@@ -48,5 +49,6 @@ private:
     std::shared_ptr<HeatmapViewSettingsWidget> m_heatmapViewSettingsWidget;
     ImFont* m_axisFont = nullptr;
     std::vector<std::shared_ptr<render_gl::AxisRenderer>> m_axes;
+    size_t m_frequencyOffset;
 };
 }

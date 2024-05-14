@@ -10,4 +10,8 @@ namespace spectr::real_time_input {
 
         return ret;
     }
+
+    size_t RealTimeInput::getFrequencyOffset() const noexcept(true) {
+        return 0;
+    }
 }

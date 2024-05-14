@@ -9,6 +9,16 @@
 #include <format>
 #include <stdexcept>
 
+// Only works with positive integer exponents but it's fine for this
+template<typename T>
+consteval T const_pow(T base, T exponent) {
+    if (exponent == 1) {
+        return base;
+    }
+
+    return base * const_pow(base, exponent - 1);
+}
+
 namespace spectr::real_time_input {
     /**
       * This class reads data from a BladeRF interface.
@@ -18,13 +28,12 @@ namespace spectr::real_time_input {
     class RealTimeInputBladeRF : public RealTimeInput {
     private:
         static constexpr int    buffers           = 16;
-        static constexpr int    buffer_size       = 65536;
+        static constexpr int    buffer_size       = const_pow(2, 16);;
         static constexpr int    transfers         = 8;
-        static constexpr int    timeout_ms        = 3500;
-        static constexpr int    sample_rate       = 48000000;
-        static constexpr int    downsampled_rate  = sample_rate / 400;
-        static constexpr size_t sleep_ms          = 50;
-        static constexpr size_t total_buffer_size = sample_rate / 1000 * sleep_ms * 32 / 8;
+        static constexpr int    timeout_ms        = 2500;
+        static constexpr int    sample_rate       = const_pow(2, 22);
+        static constexpr size_t sleep_ms          = 1;
+        static constexpr size_t total_buffer_size = buffer_size / buffers;
         static constexpr size_t frequency         = 2450000000;
 
         bladerf*                     device;
@@ -34,8 +43,6 @@ namespace spectr::real_time_input {
         static void sync_thread(bladerf* device,
                                 std::future<void> shutdown,
                                 SampledData* data) {
-            constexpr size_t samples_per_downsampled = sample_rate / downsampled_rate;
-
             int status;
 
             if ((status = bladerf_enable_module(device, BLADERF_RX, true)) != 0) {
@@ -52,23 +59,8 @@ namespace spectr::real_time_input {
                 }
 
                 SampledData newData { };
-                
-                // Just a quick and dirty test for converting data to the right format, will be replaced asap
-                for (size_t i = 0; i < downsampled_rate / 1000 * 50; i++) {
-                    size_t id = i * samples_per_downsampled * 2;
 
-                    double val = 0;
-
-                    for (size_t j = 0; j < samples_per_downsampled; j++) {
-                        val += buffer[id + j * 2];
-                    }
-
-                    val /= samples_per_downsampled;
-
-                    newData.samples.push_back(val);
-                }
-
-                // newData.samples.insert(newData.samples.end(), buffer.begin(), buffer.end());
+                newData.addSamples(buffer);
 
                 *data += newData;
             }
@@ -77,10 +69,16 @@ namespace spectr::real_time_input {
         }
 
     public:
+        static constexpr size_t min_frequency = 50000000;
+        static constexpr size_t max_frequency = 6000000000;
+        static constexpr size_t min_sample_rate = const_pow(2, 15);
+        static constexpr size_t max_sample_rate = const_pow(2, 22);
         RealTimeInputBladeRF();
         ~RealTimeInputBladeRF();
 
         audio_loader::SignalData getSignalData() noexcept(true);
+        
+        virtual size_t getFrequencyOffset() const noexcept;
 
         int getSampleRate() const noexcept(true);
     };

@@ -25,7 +25,7 @@ namespace spectr::real_time_input {
             throw std::runtime_error(std::format("Unable to set bladeRF sample rate: {}.", bladerf_strerror(status)));
         }
 
-        if ((status = bladerf_set_bandwidth(device, BLADERF_CHANNEL_RX(0), sample_rate * sizeof(float), nullptr)) != 0) {
+        if ((status = bladerf_set_bandwidth(device, BLADERF_CHANNEL_RX(0), sample_rate * sizeof(int16_t) * 2, nullptr)) != 0) {
             throw std::runtime_error(std::format("Unable to set bladeRF bandwidth: {}.", bladerf_strerror(status)));
         }
 
@@ -64,10 +64,14 @@ namespace spectr::real_time_input {
     }
 
     audio_loader::SignalData RealTimeInputBladeRF::getSignalData() noexcept(true) {
-        return getData().toSignalData(downsampled_rate);
+        return getData().toSignalData(sample_rate);
     }
 
     int RealTimeInputBladeRF::getSampleRate() const noexcept(true) {
-        return downsampled_rate;
+        return sample_rate;
+    }
+
+    size_t RealTimeInputBladeRF::getFrequencyOffset() const noexcept {
+        return frequency;
     }
 }

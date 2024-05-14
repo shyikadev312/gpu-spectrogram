@@ -23,6 +23,8 @@ namespace spectr::real_time_input {
 
         virtual int getSampleRate() const noexcept(true) = 0;
 
+        virtual size_t getFrequencyOffset() const noexcept(true);
+
         friend class SampledData;
     };
 }

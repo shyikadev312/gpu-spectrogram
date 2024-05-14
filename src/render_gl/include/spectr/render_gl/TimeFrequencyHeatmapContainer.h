@@ -126,7 +126,7 @@ public:
     /**
      * @brief Get the min and max frequency values of the stored data.
      */
-    Range getFrequencyRange() const;
+    Range getFrequencyRange(size_t offset = 0) const;
 
     /**
      * @brief Get one column size in world units. X - seconds, Y - hertz.

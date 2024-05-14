@@ -66,6 +66,9 @@
     <ClCompile Include="..\src\desktop_app\src\SpectrDesktopApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\desktop_app\src\BladeRFInputFrame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\desktop_app\include\spectr\desktop_app\AudioFileTimeFrequencyWorker.h">
@@ -120,6 +123,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\desktop_app\include\spectr\desktop_app\SplitWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\desktop_app\include\spectr\desktop_app\BladeRFInputFrame.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
